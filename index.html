@@ -1,237 +1,281 @@
 <!DOCTYPE html>
 <html>
-
 <head>
   <meta charset="utf-8">
-  <meta name="description"
-    content="EmbRACE-3K: Embodied Reasoning and Action in Complex Environments">
-  <meta name="keywords"
-    content="Hand-object iteractions; Motion refinement; Inverse problems; Generative priors; Diffusion models">
+  <meta name="description" content="EmbRACE: Embodied Reasoning and Action in Complex Environments">
+  <meta name="keywords" content="Embodied AI; Vision Language Models; Dataset; Benchmark">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta property="og:type" content="video.other" />
-  <title>EmbRACE-3K:Embodied Reasoning and Action in Complex Environments</title>
+  <title>EmbRACE: Embodied Reasoning and Action in Complex Environments</title>
 
-  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+  <!-- CSS -->
 
   <link rel="stylesheet" href="./static/css/bulma.min.css">
   <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
   <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
   <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/academicons.min.css">
   <link rel="stylesheet" href="./static/css/index.css">
-  <!-- <link rel="stylesheet" href="./static/css/styles.css"> -->
-  <link rel="icon" href="./static/images/icon-2-new.png">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script defer src="./static/js/fontawesome.all.min.js"></script>
-  <script src="./static/js/bulma-carousel.min.js"></script>
-  <script src="./static/js/bulma-slider.min.js"></script>
-  <script src="./static/js/index.js"></script>
-  <script src="assets/js/video_comparison.js"></script>
 
-  <script src="https://polyfill.io/v3/polyfill.js?features=IntersectionObserver"></script>
-  <!-- <script src="./static/js/yall.js"></script> -->
-  <script>
-    yall(
-      {
-        observeChanges: true
-      }
-    );
-  </script>
-  <!-- <script src="./static/js/scripts.js"></script> -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/js/bootstrap.bundle.min.js"></script>
-  <script src="https://uploads-ssl.webflow.com/51e0d73d83d06baa7a00000f/js/webflow.fd002feec.js"></script>
-  <script type="module" src="https://unpkg.com/@google/model-viewer@2.0.1/dist/model-viewer.min.js"></script>
+  <!-- JS (all local, no CDN) -->
+  <script src="./static/js/bulma-carousel.min.js" defer></script>
+  <script src="./static/js/bulma-slider.min.js" defer></script>
+
+
+  
   <style>
     .horizontal_line {
       width: 90%;
       height: 5px;
       border-top: 5px dotted black;
-      line-height: 80%;
     }
-
     .line {
-      border-bottom: 1px solid rgb(172, 170, 170);
+      border-bottom: 1px solid rgb(172,170,170);
       margin-top: 1px;
       margin-left: 130px;
       width: 80%;
     }
   </style>
+
+  <!-- Qualitative comparison: three closed-source models, then the open model before and after -->
+  <style>
+    .vid-group { font-size: 13px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+                 color: #9a9a9a; margin: 0 0 10px; }
+    .vid-group + .vid-row { margin-bottom: 30px; }
+    .vid-row { display: grid; gap: 16px; align-items: start; }
+    .vid-row-3 { grid-template-columns: repeat(3, 1fr); }
+    .vid-row-2 { grid-template-columns: repeat(2, 1fr); }
+    .vid-cell { min-width: 0; }
+    /* The model name is centred over its clip; the speed chip sits at the right edge. */
+    .vid-head { display: flex; align-items: center; justify-content: center; gap: 8px;
+                margin-bottom: 8px; min-height: 22px; position: relative; padding: 0 40px; }
+    .vid-name { font-size: 15px; font-weight: 700; color: #222; line-height: 1.2; white-space: nowrap;
+                overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 7px; min-width: 0; }
+    .vid-logo { width: 17px; height: 17px; object-fit: contain; flex: none; }
+    .vid-speed { flex: none; background: #FF3B30; color: #fff; font-weight: 700; font-size: 12px;
+                 padding: 2px 7px; border-radius: 6px; position: absolute; right: 0; }
+    .vid-cell video { width: 100%; border-radius: 10px; display: block; background: #000;
+                      box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+    /* The simulator cells are pinned to the clips' aspect ratio, so every cell keeps the same size. */
+    #baseline-video-container .vid-cell video { aspect-ratio: 1124 / 632; object-fit: contain; }
+    @media screen and (max-width: 860px) {
+      .vid-row-3, .vid-row-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+
+  <!-- Data Example viewer -->
+  <style>
+    .ex-card {
+      max-width: 1020px; margin: 0 auto; padding: 24px 26px 20px;
+      border: 1px solid #e6e6e6; border-radius: 16px; background: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    }
+    .ex-controls { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+    .ex-picks { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+    .ex-label { font-weight: 600; color: #555; display: flex; align-items: center; gap: 9px; font-size: 16px; }
+    .ex-picks select { font-size: 16px; height: 38px; padding-right: 2.2em; color: #333; }
+    .ex-picks .select::after { border-color: #FF3B30; }
+
+    /* The two arrows sit together as one control, so stepping through needs no hand movement. */
+    .ex-steps { display: inline-flex; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+    .ex-arrow { width: 46px; height: 38px; border: 0; padding: 0; cursor: pointer;
+                background: #FF3B30; display: inline-flex; align-items: center; justify-content: center;
+                transition: background .15s; }
+    .ex-arrow + .ex-arrow { border-left: 1px solid rgba(255,255,255,.35); }
+    .ex-arrow svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 3;
+                    stroke-linecap: round; stroke-linejoin: round; }
+    .ex-arrow:hover:not(:disabled) { background: #d92d23; }
+    .ex-arrow:disabled { background: #dcdcdc; cursor: default; }
+    .ex-arrow:disabled svg { stroke: #fff; }
+
+    /* One line at any length: the longest instruction in the set is 91 characters, which
+       measures 858px at this size inside a 968px card. The row height is fixed as well. */
+    /* Left aligned with the frame below it. The label is the part that repeats, so it stays
+       small and takes the accent colour; the sentence itself carries the weight. */
+    .ex-instruction { text-align: left; margin: 16px 0 18px; line-height: 1.35;
+                      height: 26px; white-space: nowrap; overflow: hidden; }
+    .ex-instruction .lab { color: #FF3B30; font-weight: 700; font-size: 15px; margin-right: 6px; }
+    .ex-instruction .txt { color: #222; font-weight: 600; font-size: 18px; }
+
+    .ex-body { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px; align-items: stretch; }
+    .ex-frame { margin: 0; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 10px; background: #f4f4f4; }
+    .ex-frame img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+    .ex-side { display: flex; flex-direction: column; min-height: 0;
+               border: 1px solid #ececec; border-radius: 10px; padding: 16px 18px; background: #fcfcfc; }
+    .ex-side-head { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+                    padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid #eee; }
+    /* The current step is the one number the reader tracks, so it carries the colour. */
+    .ex-step { display: inline-flex; align-items: baseline; gap: 4px; }
+    .ex-step-now { font-size: 22px; font-weight: 700; color: #FF3B30; line-height: 1; }
+    .ex-step-sep { font-size: 15px; color: #c9c9c9; }
+    .ex-step-all { font-size: 15px; font-weight: 600; color: #9a9a9a; }
+    .ex-step-word { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+                    color: #b0b0b0; margin-left: 3px; }
+    .ex-pill { display: inline-block; padding: 4px 12px; border-radius: 999px;
+               color: #fff; font-size: 13px; font-weight: 700; letter-spacing: .02em; white-space: nowrap; }
+    .ex-rationale { flex: 1; min-height: 0; overflow-y: auto; font-size: 15.5px; line-height: 1.62; color: #333; }
+
+    .ex-nav { display: flex; align-items: center; justify-content: center; height: 30px; margin-top: 14px; }
+    .ex-dots { display: flex; justify-content: center; align-items: center; gap: 7px; flex-wrap: wrap; }
+    .ex-dot { width: 9px; height: 9px; border-radius: 50%; border: 0; padding: 0; background: #d8d8d8; cursor: pointer; transition: background .15s, transform .15s; }
+    .ex-dot:hover { background: #b3b3b3; }
+    .ex-dot.is-on { background: #FF3B30; transform: scale(1.25); }
+
+    @media screen and (max-width: 820px) {
+      .ex-body { grid-template-columns: 1fr; }
+      .ex-side { min-height: 190px; }
+    }
+  </style>
+
+  <!-- Carousel dots: keep them clear of the figure instead of overlaying it. -->
+  <style>
+    .carousel.results-carousel .slider { padding-bottom: 2.2rem; }
+    .carousel.results-carousel .slider-pagination { bottom: 0.35rem; }
+    .carousel.results-carousel .slider-pagination .slider-page {
+      background: #c8c8c8;
+      box-shadow: none;
+      border: 1px solid #b0b0b0;
+    }
+    .carousel.results-carousel .slider-pagination .slider-page.is-active { background: #7a7a7a; }
+  </style>
+  <!-- EmbRACE Viewer button: the page accent, as on the example card's step arrows. -->
+  <style>
+    /* Header links as two-part badges: where the thing lives, then what it is. */
+    .badge-btn { display: inline-flex; align-items: stretch; border-radius: 999px; overflow: hidden;
+                 font-size: 15px; font-weight: 700; line-height: 1; text-decoration: none;
+                 box-shadow: 0 1px 3px rgba(0,0,0,.15); transition: transform .15s ease, box-shadow .15s ease; }
+    .badge-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+    .badge-btn .badge-src { display: inline-flex; align-items: center; gap: 8px; padding: 10px 13px 10px 16px;
+                            background: #4c535c; color: #fff; }
+    .badge-btn .badge-kind { display: inline-flex; align-items: center; padding: 10px 18px 10px 14px; color: #fff; }
+    .badge-btn .badge-src svg, .badge-btn .badge-src img { width: 19px; height: 19px; display: block; }
+    /* Four badges on one row under the author block, wrapping only on narrow screens. */
+    .hero-links { gap: 12px; margin-top: 30px; }
+    .badge-paper .badge-kind { background: #b31b1b; }
+    .badge-code .badge-kind { background: #6f56a2; }
+    .badge-data .badge-kind { background: #FF9D0B; color: #1d1d1f; }
+    .badge-viewer .badge-kind { background: #FFD21E; color: #1d1d1f; }
+    .author-list { font-size: 21px; font-weight: 600; color: #363636; line-height: 1.6;
+                   display: flex; flex-wrap: wrap; justify-content: center; column-gap: 22px; }
+    .author-list .author-break { flex-basis: 100%; height: 0; }
+    .affiliation-list { font-size: 18px; color: #4a4a4a; margin-top: 8px;
+                        display: flex; flex-wrap: wrap; justify-content: center; column-gap: 20px; }
+    .author-notes { font-size: 15px; color: #7a7a7a; margin-top: 6px;
+                    display: flex; flex-wrap: wrap; justify-content: center; column-gap: 18px; }
+    .author-list sup, .affiliation-list sup, .author-notes sup { font-size: 62%; margin-left: 1px; }
+    /* Citation: the BibTeX in a light box, with a button that copies it. */
+    .bibtex-box { position: relative; background: #f5f5f7; border: 1px solid #e4e4e7; border-radius: 12px; }
+    .bibtex-box pre { background: transparent; margin: 0; padding: 22px 24px; font-size: 14px; line-height: 1.6;
+                      color: #333; white-space: pre-wrap; word-break: break-word; }
+    .bibtex-copy { position: absolute; top: 12px; right: 12px; border: 0; border-radius: 999px; background: #FF3B30;
+                   color: #fff; font-size: 13px; font-weight: 700; padding: 6px 14px; cursor: pointer; }
+    .bibtex-copy:hover { background: #d92d23; }
+  </style>
 </head>
 
+
+
+
+
 <body>
-  <!-- <div> -->
-  <!-- <br>
-  <br>
-  <br> -->
-  <!-- </div> -->
+
   <section class="hero">
     <div class="hero-body">
       <div class="container is-max-desktop">
         <div class="columns is-centered">
           <div class="column has-text-centered">
-            <h2 class="title is-2 publication-title embrace-title">
-              <span class="em">Emb</span><span class="r">R</span><span class="a">A</span><span class="c">C</span><span class="e">E</span><span class="dash">-</span>3K
+            <h2 class="title is-2 publication-title" style="font-weight: bold;">
+  
+              <!-- Title -->
+              <span>
+                <span style="color: #FF3B30;">E</span><span style="color: #FF9F0A;">m</span><span style="color: #FFD60A;">b</span><span style="color: #32D74B;">R</span><span style="color: #40C8E0;">A</span><span style="color: #5E5CE6;">C</span><span style="color: #FF2D9B;">E</span>
+              </span>
               <br>
-              <span style="font-size:36px; font-weight:normal;">
-                <span class="subtitle-highlight1">Emb</span>odied
-                <span class="subtitle-highlight2">R</span>easoning and
-                <span class="subtitle-highlight3">A</span>ction in
-                <span class="subtitle-highlight4">C</span>omplex
-                <span class="subtitle-highlight5">E</span>nvironments
+  
+              <!-- Subtitle -->
+              <span style="font-size: 30px; font-weight: normal;">
+                <span style="color: #FF3B30;">Embodied</span>
+                <span style="color: #32D74B;">Reasoning</span> and
+                <span style="color: #40C8E0;">Action</span> in
+                <span style="color: #5E5CE6;">Complex</span>
+                <span style="color: #FF2D9B;">Environments</span>
               </span>
             </h2>
-            <div class="is-size-5 publication-authors">
-              <span class="author-block">
-                <a href="https://mxllc.github.io/">Mingxian Lin</a><sup>1*</sup>,</span>
-              <span class="author-block">
-                <a href="https://aaron-weihuang.com/">Wei Huang</a><sup>1*</sup>,</span>
-              <span class="author-block">
-                <a href="https://liyitang22.github.io/">Yitang Li</a><sup>2</sup>,</span>
-              <span class="author-block">
-                <a href="https://www.linkedin.com/in/ronniejiang">Chengjie Jiang</a><sup>3</sup>,</span>
-              <span class="author-block">
-                <a href="https://github.com/wukui-muc">Kui Wu</a><sup>4</sup>,</span><br>
-              <span class="author-block">
-                <a href="https://fangweizhong.xyz/">Fangwei Zhong</a><sup>4</sup>,</span>
-              <span class="author-block">
-                <a href="http://thesouthfrog.com/about.me/">Shengju Qian</a><sup>3‡</sup>,</span>
-              <span class="author-block">
-                <a href="https://scholar.google.com/citations?user=2Z1GJ50AAAAJ">Xin Wang</a><sup>3</sup>,</span>
-              <span class="author-block">
-                <a href="https://xjqi.github.io/">Xiaojuan Qi</a><sup>1†</sup>,</span>
-            </div>
-  
-            <div class="is-size-5 publication-authors">
-              <span class="author-block"><sup>1</sup>The University of Hong Kong,</span> 
-              <span class="author-block"><sup>2</sup>Tsinghua University,</span>
-              <span class="author-block"><sup>3</sup>LIGHTSPEED,</span> 
-              <span class="author-block"><sup>4</sup>Beijing Normal University</span> 
-            </div>
 
-            <div class="is-size-5 publication-authors">
-              <span class="author-block"><sup>*</sup>Equal Contribution, </span>
-              <span class="author-block"><sup>‡</sup>Project Lead, </span>
-              <span class="author-block"><sup>†</sup>Corresponding Author</span>
-            </div>
-
-
-  
-            <!-- <div class="is-size-4 publication-authors">
-              <span style="font-weight:bold">CVPR 2025</span>
-            </div> -->
-
-            <div class="column has-text-centered">
-            <div class="publication-links">
-
-              <span class="link-block">
-                <a href="https://arxiv.org/pdf/2507.10548"
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                      <i class="ai ai-arxiv"></i>
-                  </span>
-                  <span>arXiv</span>
-                </a>
-              </span>
-
-<!--               <span class="link-block">
-                <a href="./static/pdfs/Parameterized_Quasi_Physical_Simulators_for_Dexterous_Manipulations_Transfer.pdf"
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                      <i class="fas fa-file-pdf"></i>
-                  </span>
-                  <span>Paper</span>
-                </a>
-              </span> -->
-              <span class="link-block">
-                <a href="https://huggingface.co/papers/2507.10548"
-                   class="external-link button is-normal is-rounded is-dark">
-                  <!-- <span class="icon">
-                      <i class="fab fa-youtube"></i>
-                  </span>  -->
-                  <span>🤗 Hugging Face </span>
-                </a>
-              </span>
-              
-              <span class="link-block">
-                <a href="https://github.com/mxllc/EmbRACE-3K"
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                      <i class="fab fa-github"></i>
-                  </span>
-                  <span>Code</span>
-                  </a>
-              </span>
-
-              <!-- <span class="link-block">
-                <a href="https://www.youtube.com/watch?v=eJ2G_tpUE8Y"
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                      <i class="fab fa-youtube"></i>
-                  </span>
-                  <span>Video</span>
-                </a>
-              </span> -->
-<!--               <span class="link-block">
-                <a href="https://docs.google.com/presentation/d/1nRCxP_5P9Pcni53zvyRZ_PEDIaQeE8FF/edit?usp=sharing&ouid=103893738370724206774&rtpof=true&sd=true"
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                    <i class="fab fa-slideshare"></i>
-                  </span>
-                  <span>Slides (114MB)</span>
-                </a>
-              </span> -->
-              <span class="link-block">
-                <a href="./static/EmbRACE_3K_supp.pdf"
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                    <i class="fas fa-file-pdf"></i>
-                  </span>
-                  <span>Supp</span>
-                </a>
-              </span>
-            </div>
-
-          </div>
             
-          </div>
-          
-        </div>
-        
-  </section>
+            
+            <div class="is-size-5 publication-authors" style="margin-top: 24px; text-align: center;">
+              <!-- Authors, affiliations and marks as on arXiv 2507.10548. -->
+              <div class="author-list">
+                <span>Mingxian Lin<sup>1*</sup></span>
+                <span>Wei Huang<sup>1*</sup></span>
+                <span>Yitang Li<sup>2</sup></span>
+                <span>Chengjie Jiang<sup>2</sup></span>
+                <span>Kui Wu<sup>3</sup></span>
+                <span class="author-break"></span>
+                <span>Fangwei Zhong<sup>3</sup></span>
+                <span>Weikai Chen<sup>4</sup></span>
+                <span>Shengju Qian<sup>4&Dagger;</sup></span>
+                <span>Xin Wang<sup>4</sup></span>
+                <span>Xiaojuan Qi<sup>1&dagger;</sup></span>
+              </div>
+              <div class="affiliation-list">
+                <span><sup>1</sup>The University of Hong Kong</span>
+                <span><sup>2</sup>Tsinghua University</span>
+                <span><sup>3</sup>Beijing Normal University</span>
+                <span><sup>4</sup>LIGHTSPEED</span>
+              </div>
+              <div class="author-notes">
+                <span><sup>*</sup>Equal Contribution</span>
+                <span><sup>&Dagger;</sup>Project Lead</span>
+                <span><sup>&dagger;</sup>Corresponding Author</span>
+              </div>
+            
+            </div>
 
+            <!-- The paper, the code, and the dataset and its viewer on Hugging Face. -->
+            <div class="hero-links">
+              <a class="badge-btn badge-paper" href="https://arxiv.org/abs/2507.10548" target="_blank" rel="noopener">
+                <span class="badge-src"><img src="./static/images/arxiv-logomark.svg" alt="">arXiv</span>
+                <span class="badge-kind">Paper</span>
+              </a>
+              <a class="badge-btn badge-code" href="https://github.com/mxlin043/EmbRACE" target="_blank" rel="noopener">
+                <span class="badge-src"><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="#fff" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</span>
+                <span class="badge-kind">Code</span>
+              </a>
+              <a class="badge-btn badge-data" href="https://huggingface.co/datasets/mxlin043/EmbRACE" target="_blank" rel="noopener">
+                <span class="badge-src"><img src="./static/images/hf-logo.svg" alt="">Hugging Face</span>
+                <span class="badge-kind">EmbRACE</span>
+              </a>
+              <a class="badge-btn badge-viewer" href="https://huggingface.co/spaces/mxlin043/EmbRACE-Viewer" target="_blank" rel="noopener">
+                <span class="badge-src"><img src="./static/images/hf-logo.svg" alt="">Hugging Face</span>
+                <span class="badge-kind">EmbRACE-Viewer</span>
+              </a>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
 
 
   <section class="section">
     <div class="container is-max-desktop">
       
-      <!-- Section Title -->
-      <div class="has-text-centered mb-5">
-        <h2 class="title is-3" style="font-weight: bold; color: black;">Preview</h2>
+      <div class="has-text-centered">
+        <h2 class="title is-3" style="color: rgb(0, 0, 0); font-weight:bold;">Overview</h2>
       </div>
-
-      <!-- Qwen2.5-VL-7B SFT+RL Evaluation -->
-      <div class="has-text-centered mb-4">
-        <!-- <h3 class="title is-4" style="font-weight: bold; color: black;">Evaluation Result of Qwen2.5-VL-7B (SFT + RL)</h3> -->
-         <!-- <h3 class="title is-4" style="font-weight: bold; color: black;">Evaluation Result</h3> -->
+      <div class="has-text-centered mt-3">
         <p style="font-size: 18px; max-width: 800px; margin: 0 auto; text-align: justify;">
-          This demo showcases step-by-step decision making by a fine-tuned <strong>Qwen2.5-VL-7B</strong> model, 
-          highlighting its ability to reason and act through closed-loop interaction based on perception.
+          <strong>EmbRACE</strong> at a glance. (a) Photorealistic Unreal Engine environments, indoor and outdoor.
+          (b) The closed loop. At each step the agent receives an egocentric view, produces a rationale, and issues
+          one action, which changes the next view. (c) A human demonstration of the instruction shown, with the path
+          taken and, at each step along it, the egocentric view, the rationale, and the action.
         </p>
-        <img src="static/images/qwen_ft.gif" alt="Qwen Evaluation Demo" style="width: 100%; max-width: 850px; border-radius: 0; margin-top: 1em;">
-      </div>
-
-      <!-- Dataset Overview -->
-      <div class="has-text-centered mt-6">
-        <!-- <h3 class="title is-4" style="font-weight: bold; color: black;">Dataset Overview</h3> -->
-        <p style="font-size: 18px; max-width: 800px; margin: 0 auto; text-align: justify;">
-          An overview of the 
-          <span class="embrace-title">
-            <span class="em">Emb</span><span class="r">R</span><span class="a">A</span><span class="c">C</span><span class="e">E</span><span class="dash">-</span>3K,
-          </span> consisting of 3.1k tasks and 26k decision steps, covering diverse environments and multi-stage tasks that require perception, reasoning, and action.
-        </p>
-        <img src="static/images/teaser.png" alt="EmRACE Dataset Teaser" style="width: 100%; max-width: 1000px; border-radius: 0; margin-top: 1em;">
+        <img src="static/images/new_teaser.jpg" alt="EmbRACE teaser"
+             style="width: 100%; max-width: 1000px; border-radius: 0; margin-top: 1em;">
       </div>
 
     </div>
@@ -239,14 +283,9 @@
 
 
 
-
-
-
   <div class="container is-full-hd is-centered">
     <div class="line"></div>
   </div>
-
-
 
 
   <section class="section">
@@ -256,16 +295,7 @@
           <h2 class="title is-3" style="color: rgb(0, 0, 0); font-weight:bold;">Abstract</h2>
           <div class="content has-text-justified">
             <p style="font-size: 18px;">
-              Recent vision-language models (VLMs) show strong results on offline image and video understanding, but their performance in interactive, embodied environments remains limited. In close loop settings, an agent acts from a first-person view, where each decision alters future observations. Even leading models like GPT-4o, Claude 3.5 Sonnet, and Gemini 2.5 Pro struggle with spatial reasoning and long-horizon planning.
-              We present 
-              <span class="embrace-title">
-                <span class="em">Emb</span><span class="r">R</span><span class="a">A</span><span class="c">C</span><span class="e">E</span><span class="dash">-</span>3K
-              </span>, a dataset of over <strong>3,000</strong> language-guided tasks in diverse Unreal Engine environments. Each task spans multiple steps, with egocentric views, high-level instructions, grounded actions, and natural language rationales.
-              We benchmark VLMs on three core skills: exploration, dynamic spatial-semantic reasoning, and multi-stage goal execution. In zero-shot tests, all models achieve below 20 percent success, showing clear room for improvement. Fine-tuning Qwen2.5-VL-7B with supervised and reinforcement learning leads to consistent gains across all task types, demonstrating the value of 
-              <span class="embrace-title">
-                <span class="em">Emb</span><span class="r">R</span><span class="a">A</span><span class="c">C</span><span class="e">E</span><span class="dash">-</span>3K
-              </span> for developing embodied intelligence.
-            </p>
+              Vision-language models are increasingly run as embodied agents in a closed loop in which some decisions depend on what the agent saw earlier. Placed in this loop, current models act on the view in front of them, revisit views already searched, lose a target that has left the frame, and switch referents as the viewpoint changes. The demonstrations that embodied models learn from record the view and the action at each step, not the observations the action was based on. We present EmbRACE, a dataset of 3,421 human demonstrations recorded from the egocentric view in photorealistic Unreal Engine environments, indoor and outdoor, on tasks with targets to search for, relational and ordered targets, and door and object interactions. Each of its 48,264 steps carries a rationale that states what the action was based on and is verified against the frames. A benchmark of 686 tasks in 7 held-out environments runs models in the closed loop and scores them on the final position and on the door and object states. Frontier models score highest when the target is in view from the start, lower on all three task types that depend on an earlier observation, and below half when the target has to be searched for or returned to. Fine-tuning on EmbRACE takes four open models of 2B to 9B parameters from 3% to 8% overall to 57% to 68%. Relative to training on the same trajectories without them, the rationales raise success by 7% to 18% across task types and halve the fraction of episodes that return to views already seen. The dataset, the benchmark, and the code will be made publicly available.</p>
           </div>
         </div>
       </div>
@@ -280,15 +310,14 @@
       <!-- Section Title -->
       <div class="columns is-centered has-text-centered">
         <div class="column is-full">
-          <h2 class="title is-3"><span style="color: rgb(0, 0, 0); font-weight:bold">Data Collection</span></h2>
+          <h2 class="title is-3"><span style="color: rgb(0, 0, 0); font-weight:bold">Data Construction</span></h2>
+
 
           <div class="content has-text-left mb-5">
             <p style="font-size: 18px;">
-              The <span class="embrace-title">
-                <span class="em">Emb</span><span class="r">R</span><span class="a">A</span><span class="c">C</span><span class="e">E</span><span class="dash">-</span>3K
-              </span> dataset is built in four stages: (1) sampling diverse 6-DoF agent poses with ego views in virtual environments, (2) generating grounded task instructions using Gemini, (3) collecting human demonstrations, and (4) annotating each action with step-wise natural language reasoning to explain agent decisions and enhance interpretability.
-            </p>
+              EmbRACE is collected in four stages, each of which ends with a check that its artifact has to pass before the next stage builds on it, and the annotator who checks an artifact is never the one who produced it. (1) Annotators sample 6-DoF first-person start poses across the environments. (2) Annotators write the task instruction from the start pose, and a second annotator checks that the named target exists and matches the task type, that it can be reached, and that no other object of the same class fits the description. (3) Annotators record the demonstration by controlling the character from the egocentric view, and each recording is re-executed on a freshly loaded map and has to reproduce every pose exactly before a second annotator confirms that the task was accomplished. (4) Claude Opus 4.8 writes a rationale for every recorded step from the frames that precede it, and annotators verify every trajectory frame by frame on three criteria, that the objects and sides it mentions are visible where it says they are, that it asserts nothing unobservable at that step, and that the stated intent matches the executed action. Overall, the dataset has <strong>3,421 demonstrations</strong> in <strong>55 environments</strong>, <strong>48,264 steps</strong> in all, each with a rationale verified by annotators. The benchmark has <strong>686 tasks</strong> in <strong>7 further environments</strong>, held out from training.</p>
           </div>
+
 
         </div>
       </div>
@@ -297,7 +326,7 @@
       <div class="columns is-centered">
         <div class="column is-full has-text-centered">
           <figure class="image">
-            <img src="./static/images/pipeline.png" alt="Data Collection Pipeline">
+            <img src="./static/images/new_data_collection.jpg" alt="EmbRACE data collection pipeline">
           </figure>
         </div>
       </div>
@@ -318,35 +347,62 @@
         </div>
       </div>
 
-      <!-- Carousel -->
+            <!-- Carousel -->
       <section class="hero is-light is-small">
         <div class="hero-body">
           <div class="container">
             <div id="statistics-carousel" class="carousel results-carousel">
 
               <div class="item">
+                <div class="has-text-centered" style="font-weight:bold; font-size:22px; margin-bottom:6px;">
+                  Rationale Word-Cloud of EmbRACE
+                </div>
                 <figure class="image has-text-centered">
-                  <img src="./static/images/trajectory_distribution.png" alt="Trajectory Distribution"
+                  <img src="./static/images/panel4_thinking_wordcloud.png" alt="Rationale Word-Cloud of EmbRACE"
                       style="max-height: 400px; object-fit: contain; margin: auto;">
-                  <figcaption style="margin-top: 0.5em;">Trajectory Distribution</figcaption>
                 </figure>
               </div>
 
               <div class="item">
+                <div class="has-text-centered" style="font-weight:bold; font-size:22px; margin-bottom:6px;">
+                  Task Word-Cloud of EmbRACE
+                </div>
                 <figure class="image has-text-centered">
-                  <img src="./static/images/word_cloud.png" alt="Instruction Word Cloud"
+                  <img src="./static/images/panel5_task_wordcloud.png" alt="Task Word-Cloud of EmbRACE"
                       style="max-height: 400px; object-fit: contain; margin: auto;">
-                  <figcaption style="margin-top: 0.5em;">Instruction Word Cloud</figcaption>
                 </figure>
               </div>
 
               <div class="item">
+                <div class="has-text-centered" style="font-weight:bold; font-size:22px; margin-bottom:6px;">
+                  Rationale Token Number Distribution
+                </div>
                 <figure class="image has-text-centered">
-                  <img src="./static/images/type_distribution.png" alt="Task Type Distribution"
+                  <img src="./static/images/panel1_thinking_tokens.png" alt="Rationale Token Number Distribution"
                       style="max-height: 400px; object-fit: contain; margin: auto;">
-                  <figcaption style="margin-top: 0.5em;">Task Type Distribution</figcaption>
                 </figure>
               </div>
+              
+              <div class="item">
+                <div class="has-text-centered" style="font-weight:bold; font-size:22px; margin-bottom:6px;">
+                  Action Trajectory Length Distribution
+                </div>
+                <figure class="image has-text-centered">
+                  <img src="./static/images/panel2_trajectory_length.png" alt="Action Trajectory Length Distribution"
+                      style="max-height: 400px; object-fit: contain; margin: auto;">
+                </figure>
+              </div>
+
+              <div class="item">
+                <div class="has-text-centered" style="font-weight:bold; font-size:22px; margin-bottom:6px;">
+                  Task Type Distribution
+                </div>
+                <figure class="image has-text-centered">
+                  <img src="./static/images/panel3_task_donut.png" alt="Task Type Distribution"
+                      style="max-height: 400px; object-fit: contain; margin: auto;">
+                </figure>
+              </div>
+
 
             </div>
           </div>
@@ -358,9 +414,10 @@
 
 
 
+
   <section class="section">
     <div class="container is-max-desktop">
-      <!-- 标题 -->
+      <!-- Section Title -->
       <div class="columns is-centered has-text-centered">
         <div class="column is-four-fifths">
           <h2 class="title is-3">
@@ -369,81 +426,63 @@
         </div>
       </div>
 
-    <!-- 数据说明 -->
+    <!-- Description -->
     <div class="content has-text-left mb-5">
       <p style="font-size: 18px;">
-        The 
-        <span class="embrace-title">
-          <span class="em">Emb</span><span class="r">R</span><span class="a">A</span><span class="c">C</span><span class="e">E</span><span class="dash">-</span>3K
-        </span>
-        dataset provides <strong>6 types of embodied tasks</strong>,
-        each represented as a <strong>trajectory</strong> of step-by-step interaction.
-        These tasks are performed in a <strong>close-loop</strong> manner,
-        where the agent's perception at each step determines its next action,
-        forming a tight feedback cycle between observation and decision-making.
-        For every step, the dataset includes:
-        <strong style="color: #FF5722;">instruction</strong>,
-        <strong style="color: #009688;">egocentric view image</strong>,
-        <strong style="color: #FFB300;">thinking</strong>, and
-        <strong style="color: #40C4FF;">action</strong>.
-        Below are a few demo examples.
-      </p>
+        EmbRACE covers <strong>six types of embodied task</strong>, each recorded as a <strong>trajectory</strong> of single steps taken by a <strong>human demonstrator</strong>. The setting is <strong>closed-loop</strong>, so an action changes what the agent sees next and every decision rests on what has been seen up to that point. Each step carries the <strong style="color: #FF5722;">instruction</strong>, the <strong style="color: #009688;">egocentric view</strong> the demonstrator had before acting, the <strong style="color: #40C4FF;">action</strong> taken, and a <strong style="color: #FFB300;">rationale</strong> written from that view and verified against it. Three examples of each type are shown below, from different environments.</p>
     </div>
 
 
-    <div class="field is-grouped is-grouped-centered mb-4" style="justify-content: center;">
-      <!-- Task type selector with inline label -->
-      <div class="control" style="display: flex; align-items: center; margin-right: 20px;">
-        <span style="font-weight: bold; margin-right: 6px;">Type:</span>
-        <div class="select">
-          <select id="task-type"></select>
+    <!-- Viewer. The row height is set by the frame's 4:3 box, so nothing moves
+         between steps and the controls stay where the reader left them. -->
+    <div class="ex-card">
+
+      <div class="ex-controls">
+        <div class="ex-picks">
+          <label class="ex-label">Type
+            <span class="select"><select id="task-type"></select></span>
+          </label>
+          <label class="ex-label">Environment
+            <span class="select"><select id="task-item"></select></span>
+          </label>
+        </div>
+        <div class="ex-steps">
+          <button id="prev-step" class="ex-arrow" aria-label="previous step">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15,4 7,12 15,20"/></svg>
+          </button>
+          <button id="next-step" class="ex-arrow" aria-label="next step">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="9,4 17,12 9,20"/></svg>
+          </button>
         </div>
       </div>
 
-      <!-- Task ID selector with inline label -->
-      <div class="control" style="display: flex; align-items: center;">
-        <span style="font-weight: bold; margin-right: 6px;">Task:</span>
-        <div class="select">
-          <select id="task-item"></select>
-        </div>
-      </div>
-    </div>
+      <p id="instruction" class="ex-instruction"></p>
 
-
-      <!-- 指令 -->
-      <div class="has-text-centered mb-5">
-        <p id="instruction"></p>
-      </div>
-
-      <!-- 图像 + 信息 -->
-      <div class="columns is-centered is-vcentered">
-        <!-- 左图像 -->
-        <div class="column is-half has-text-centered">
-          <figure class="image" style="height: 512px; overflow: hidden;">
-            <img id="step-image" src="" style="height: 100%; width: auto; object-fit: cover; border-radius: 8px;" />
-          </figure>
-        </div>
-
-        <!-- 右内容框 -->
-        <div class="column is-half">
-          <div style="border: 1px solid #ccc; border-radius: 12px; padding: 20px; height: 512px; overflow-y: auto;">
-            <div id="step-id" class="mb-3"></div>
-            <div id="thinking-box" class="mb-3"></div>
-            <div id="action-box" class="mb-3"></div>
+      <div class="ex-body">
+        <figure class="ex-frame">
+          <img id="step-image" src="" alt="egocentric view" />
+        </figure>
+        <aside class="ex-side">
+          <div class="ex-side-head">
+            <span id="step-id" class="ex-step"></span>
+            <span id="action-box"></span>
           </div>
-        </div>
+          <div id="thinking-box" class="ex-rationale"></div>
+        </aside>
       </div>
 
-      <!-- 下方按钮 -->
-      <div class="buttons is-centered mt-4" style="justify-content: center;">
-        <button id="prev-step" class="button is-light" style="height: 40px;">← Last Step</button>
-        <button id="next-step" class="button is-link" style="height: 40px;">Next Step →</button>
+      <div class="ex-nav">
+        <div id="step-dots" class="ex-dots"></div>
       </div>
+
     </div>
+
   </section>
 
 
 
+
+  
 
 
   <section class="section">
@@ -452,19 +491,17 @@
       <!-- Section Title -->
       <div class="columns is-centered has-text-centered">
         <div class="column is-four-fifths">
-          <h2 class="title is-3" style="color: black; font-weight: bold;">Baseline Comparison</h2>
+          <h2 class="title is-3" style="color: black; font-weight: bold;">Simulator Qualitative Comparisons</h2>
         </div>
       </div>
 
       <!-- Description -->
       <div class="content has-text-left mb-5">
         <p style="font-size: 18px;">
-          We show the <strong>qualitative performance</strong> of several strong <strong>vision-language models (VLMs)</strong> on a variety of tasks from the 
-          <span class="embrace-title">
-            <span class="em">Emb</span><span class="r">R</span><span class="a">A</span><span class="c">C</span><span class="e">E</span><span class="dash">-</span>3K
-          </span> dataset, including <strong>GPT-4o</strong>, <strong>Gemini 2.5 Pro</strong>, <strong>Qwen2.5-VL 7B (Original)</strong>, and <strong>Qwen2.5-VL 7B (SFT + RL)</strong>.
-          You can select a task type to preview how different baselines behave in the same environment.
-          The labels in the upper-right corner (e.g., <code>x10</code>) indicate the playback speed of each video, which has been accelerated for more efficient viewing.
+          Five models run the same task in the same environment, side by side. The three closed-source
+          models are run zero-shot, and Qwen3.5-9B is shown before and after supervised fine-tuning on
+          <strong>EmbRACE</strong>. Pick a task type to compare their behaviour.
+          The clips run at the speed the character moved.
         </p>
       </div>
 
@@ -475,263 +512,185 @@
           <div class="select">
             <select id="baseline-type" onchange="updateBaselineVideos()">
               <option value="Basic">Basic</option>
-              <option value="Exploration">Exploration</option>
+              <option value="Exploration" selected>Exploration</option>
               <option value="Dynamic_Spatial-Semantic">Dynamic Spatial-Semantic</option>
               <option value="Multi-stage">Multi-stage</option>
-              <option value="Interaction_Open-Door">Interaction Open-Door</option>
-              <option value="Interaction_Pick-and-Drop">Interaction Pick-and-Drop</option>
+              <option value="Interaction_Open-Door">Open Door</option>
+              <option value="Interaction_Pick-and-Drop">Pick &amp; Drop</option>
             </select>
           </div>
         </div>
       </div>
 
       <!-- Video Grid -->
-      <div id="baseline-video-container" class="columns is-multiline is-centered">
+      <div id="baseline-video-container">
 
-        <!-- GPT-4o -->
-        <div class="column is-half has-text-centered">
-          <div style="margin-bottom: 10px;">
-            <div style="display: flex; justify-content: center; align-items: center; position: relative;">
-              <h3 class="title is-5" style="margin: 0 auto;">GPT-4o</h3>
-              <span id="gpt-label"
-                    style="position: absolute; right: 0; background: #FF5722; color: white; font-weight: bold;
-                          font-size: 16px; padding: 2px 8px; border-radius: 6px;
-                          box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                x?
-              </span>
-            </div>
+        <p class="vid-group">Closed-source models, zero-shot</p>
+        <div class="vid-row vid-row-3">
+          <div class="vid-cell">
+            <div class="vid-head"><span class="vid-name"><img class="vid-logo" src="./static/images/logos/openai.png" alt="">GPT-5.5</span><span id="gpt-label" class="vid-speed">x?</span></div>
+            <video id="gpt-video" controls playsinline preload="metadata"><source src="" type="video/mp4"></video>
           </div>
-          <video id="gpt-video" controls style="width: 100%; border-radius: 12px;">
-            <source src="" type="video/mp4">
-          </video>
+          <div class="vid-cell">
+            <div class="vid-head"><span class="vid-name"><img class="vid-logo" src="./static/images/logos/claude.png" alt="">Claude Opus 4.8</span><span id="claude-label" class="vid-speed">x?</span></div>
+            <video id="claude-video" controls playsinline preload="metadata"><source src="" type="video/mp4"></video>
+          </div>
+          <div class="vid-cell">
+            <div class="vid-head"><span class="vid-name"><img class="vid-logo" src="./static/images/logos/gemini.png" alt="">Gemini 3.1 Pro Preview</span><span id="gemini-label" class="vid-speed">x?</span></div>
+            <video id="gemini-video" controls playsinline preload="metadata"><source src="" type="video/mp4"></video>
+          </div>
         </div>
 
-        <!-- Gemini -->
-        <div class="column is-half has-text-centered">
-          <div style="margin-bottom: 10px;">
-            <div style="display: flex; justify-content: center; align-items: center; position: relative;">
-              <h3 class="title is-5" style="margin: 0 auto;">Gemini 2.5 Pro</h3>
-              <span id="gemini-label"
-                    style="position: absolute; right: 0; background: #FF5722; color: white; font-weight: bold;
-                          font-size: 16px; padding: 2px 8px; border-radius: 6px;
-                          box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                x?
-              </span>
-            </div>
+        <p class="vid-group">Qwen3.5-9B, before and after fine-tuning on EmbRACE</p>
+        <div class="vid-row vid-row-2">
+          <div class="vid-cell">
+            <div class="vid-head"><span class="vid-name"><img class="vid-logo" src="./static/images/logos/qwen.png" alt="">Qwen3.5-9B (zero-shot)</span><span id="qwen-label" class="vid-speed">x?</span></div>
+            <video id="qwen-video" controls playsinline preload="metadata"><source src="" type="video/mp4"></video>
           </div>
-          <video id="gemini-video" controls style="width: 100%; border-radius: 12px;">
-            <source src="" type="video/mp4">
-          </video>
-        </div>
-
-        <!-- Qwen Original -->
-        <div class="column is-half has-text-centered">
-          <div style="margin-bottom: 10px;">
-            <div style="display: flex; justify-content: center; align-items: center; position: relative;">
-              <h3 class="title is-5" style="margin: 0 auto;">Qwen2.5-VL 7B (Original)</h3>
-              <span id="qwen-label"
-                    style="position: absolute; right: 0; background: #FF5722; color: white; font-weight: bold;
-                          font-size: 16px; padding: 2px 8px; border-radius: 6px;
-                          box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                x?
-              </span>
-            </div>
+          <div class="vid-cell">
+            <div class="vid-head"><span class="vid-name"><img class="vid-logo" src="./static/images/logos/qwen.png" alt="">Qwen3.5-9B (SFT)</span><span id="qwen_ft-label" class="vid-speed">x?</span></div>
+            <video id="qwenft-video" controls playsinline preload="metadata"><source src="" type="video/mp4"></video>
           </div>
-          <video id="qwen-video" controls style="width: 100%; border-radius: 12px;">
-            <source src="" type="video/mp4">
-          </video>
-        </div>
-
-        <!-- Qwen SFT + RL -->
-        <div class="column is-half has-text-centered">
-          <div style="margin-bottom: 10px;">
-            <div style="display: flex; justify-content: center; align-items: center; position: relative;">
-              <h3 class="title is-5" style="margin: 0 auto;">Qwen2.5-VL 7B (SFT + RL)</h3>
-              <span id="qwen_ft-label"
-                    style="position: absolute; right: 0; background: #FF5722; color: white; font-weight: bold;
-                          font-size: 16px; padding: 2px 8px; border-radius: 6px;
-                          box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                x?
-              </span>
-            </div>
-          </div>
-          <video id="qwenft-video" controls style="width: 100%; border-radius: 12px;">
-            <source src="" type="video/mp4">
-          </video>
         </div>
 
       </div>
+
     </div>
   </section>
 
 
+  <section class="section">
+    <div class="container is-max-desktop">
 
+      <!-- Section Title -->
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3" style="color: black; font-weight: bold;">Real-World Qualitative Comparisons</h2>
+        </div>
+      </div>
 
-
-
-
-
-  <div class="container is-full-hd is-centered">
-    <div class="line"></div>
-  </div>
-
-
-
-
-
-
-
-  <script src="https://polyfill.io/v3/polyfill.js?features=IntersectionObserver"></script>
-  <!-- <script src="/assets/js/yall.js"></script> -->
-  <script>
-    yall(
-      {
-        observeChanges: true
-      }
-    );
-  </script>
-  <!-- <script src="/assets/js/scripts.js"></script> -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/js/bootstrap.bundle.min.js"></script>
-  <script src="https://uploads-ssl.webflow.com/51e0d73d83d06baa7a00000f/js/webflow.fd002feec.js"></script>
-
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      var lazyVideos = [].slice.call(document.querySelectorAll("video.lazy"));
-      if ("IntersectionObserver" in window) {
-        var lazyVideoObserver = new IntersectionObserver(function (entries, observer) {
-          entries.forEach(function (video) {
-            if (video.isIntersecting) {
-              for (var source in video.target.children) {
-                var videoSource = video.target.children[source];
-                if (typeof videoSource.tagName === "string" && videoSource.tagName === "SOURCE") {
-                  videoSource.src = videoSource.dataset.src;
-                }
-              }
-              video.target.load();
-              video.target.classList.remove("lazy");
-              lazyVideoObserver.unobserve(video.target);
-            }
-          });
-        });
-        lazyVideos.forEach(function (lazyVideo) {
-          lazyVideoObserver.observe(lazyVideo);
-        });
-      }
-    });
-  </script>
-
-
-  <script>
-    function change_stochastic() {
-      console.info("hhh\n");
-      const showMoreBtn = document.getElementById('showMoreBtn_stochastic');
-      if (showMoreBtn.innerText == 'More results') {
-        showMoreBtn.innerText = 'Hide';
-      } else {
-        showMoreBtn.innerText = 'More results';
-      }
-    };
-
-    function change_arctic() {
-      console.info("hhh\n");
-      const showMoreBtn = document.getElementById('showMoreBtn_arctic');
-      if (showMoreBtn.innerText == 'More results') {
-        showMoreBtn.innerText = 'Hide';
-      } else {
-        showMoreBtn.innerText = 'More results';
-      }
-    };
-
-    function change_hoi4d() {
-      console.info("hhh\n");
-      const showMoreBtn = document.getElementById('showMoreBtn_hoi4d');
-      if (showMoreBtn.innerText == 'More results') {
-        showMoreBtn.innerText = 'Hide';
-      } else {
-        showMoreBtn.innerText = 'More results';
-      }
-    };
-
-    function change_grabbeta() {
-      console.info("hhh\n");
-      const showMoreBtn = document.getElementById('showMoreBtn_grabbeta');
-      if (showMoreBtn.innerText == 'More results') {
-        showMoreBtn.innerText = 'Hide';
-      } else {
-        showMoreBtn.innerText = 'More results';
-      }
-    };
-
-    function change_grab() {
-      console.info("hhh\n");
-      const showMoreBtn = document.getElementById('showMoreBtn_grab');
-      if (showMoreBtn.innerText == 'More results') {
-        showMoreBtn.innerText = 'Hide';
-      } else {
-        showMoreBtn.innerText = 'More results';
-      }
-    };
-
-    function change_appli() {
-      console.info("hhh\n");
-      const showMoreBtn = document.getElementById('showMoreBtn_appli');
-      if (showMoreBtn.innerText == 'More results') {
-        showMoreBtn.innerText = 'Hide';
-      } else {
-        showMoreBtn.innerText = 'More results';
-      }
-    };
-  </script>
-
-
-  <div class="container is-full-hd is-centered">
-    <!-- <hr class="solid; " color="blue" noshade> -->
-    <!-- <hr width="100%" size="2" color="blue" noshade> -->
-    <div class="line"></div>
-  </div>
-
-
-  <section class="section " id="BibTeX">
-    <div class="container is-max-desktop content">
-      <h2 class="title is-3 has-text-centered">BibTeX</h2>
-      <pre><code>@article{lin2025embrace3k,
-        title={EmbRACE-3K: Embodied Reasoning and Action in Complex Environments},
-        author={Lin, Mingxian and Huang, Wei and Li, Yitang and Jiang, Chengjie and Wu, Kui and Zhong, Fangwei and Qian, Shengju and Wang, Xin and Qi, Xiaojuan},
-        journal={arXiv preprint arXiv:2507.10548},
-        year={2025}
-      }</code></pre>
-    </div>
-  </section>
-
-            
-  <section class="section" id="Contact">
-    <div class="container is-max-desktop content has-text-centered">
-      <!-- <h2 class="title">Contact</h2> -->
-      <h2 class="title is-3">Contact</h2>
-        <p>
-          Please contact us at <a href="mailto:lmx.mingxian@gmail.com">lmx.mingxian@gmail.com</a> if you have any question. 
+      <!-- Description -->
+      <div class="content has-text-left mb-5">
+        <p style="font-size: 18px;">
+          We run real-world experiments on a <strong>wheeled mobile robot controlled by a Raspberry Pi 5</strong> to examine how different 
+          <strong>vision-language models (VLMs)</strong> behave outside simulation. 
+          We provide demonstrations for both <strong>Navigation (Exploration)</strong> and <strong>Interaction (Pick &amp; Drop)</strong>, 
+          showing how each model performs when executing embodied tasks in a physical environment.
+          The small inset image shown in each video represents the <strong>discrete egocentric frames</strong> received by the robot, 
+          which correspond to the exact visual observations available to the VLM during decision making. 
+          All clips are played back at 4&times; speed.
         </p>
-    </div>
-  </section>
-  
+      </div>
 
-
-  <footer class="footer">
-    <div class="container">
-      <div class="columns is-centered">
-        <div class="column is-8">
-          <div class="content">
-            <p>
-              The template is adapted from <a href="https://github.com/nerfies/nerfies.github.io">Nerfies</a>. We thank
-              authors for their codebase.
-            </p>
+      <!-- Dropdown Selector -->
+      <div class="field is-grouped is-grouped-centered mb-5" style="justify-content: center;">
+        <div class="control" style="display: flex; align-items: center;">
+          <span style="font-weight: bold; margin-right: 6px;">Type:</span>
+          <div class="select">
+            <select id="real-type" onchange="updateRealVideos()">
+              <option value="Navigation">Navigation</option>
+              <option value="Interaction">Interaction</option>
+            </select>
           </div>
         </div>
       </div>
+
+      
+      <!-- Video Grid -->
+      <div id="real-video-container">
+
+        <p class="vid-group">Closed-source models, zero-shot</p>
+        <div class="vid-row vid-row-3">
+          <div class="vid-cell">
+            <div class="vid-head"><span class="vid-name"><img class="vid-logo" src="./static/images/logos/openai.png" alt="">GPT-5.5</span></div>
+            <video id="gpt-video-real" controls playsinline preload="metadata"><source src="" type="video/mp4"></video>
+          </div>
+          <div class="vid-cell">
+            <div class="vid-head"><span class="vid-name"><img class="vid-logo" src="./static/images/logos/claude.png" alt="">Claude Opus 4.8</span></div>
+            <video id="claude-video-real" controls playsinline preload="metadata"><source src="" type="video/mp4"></video>
+          </div>
+          <div class="vid-cell">
+            <div class="vid-head"><span class="vid-name"><img class="vid-logo" src="./static/images/logos/gemini.png" alt="">Gemini 3.1 Pro Preview</span></div>
+            <video id="gemini-video-real" controls playsinline preload="metadata"><source src="" type="video/mp4"></video>
+          </div>
+        </div>
+
+        <p class="vid-group">Qwen3.5-9B, before and after fine-tuning on EmbRACE</p>
+        <div class="vid-row vid-row-2">
+          <div class="vid-cell">
+            <div class="vid-head"><span class="vid-name"><img class="vid-logo" src="./static/images/logos/qwen.png" alt="">Qwen3.5-9B (zero-shot)</span></div>
+            <video id="qwen-video-real" controls playsinline preload="metadata"><source src="" type="video/mp4"></video>
+          </div>
+          <div class="vid-cell">
+            <div class="vid-head"><span class="vid-name"><img class="vid-logo" src="./static/images/logos/qwen.png" alt="">Qwen3.5-9B (SFT)</span></div>
+            <video id="qwenft-video-real" controls playsinline preload="metadata"><source src="" type="video/mp4"></video>
+          </div>
+        </div>
+
+      </div>
+
     </div>
-  </footer>
+  </section>
+
+  <!-- Citation in the Google Scholar form. Title and authors as in the header. -->
+  <section class="section" id="citation">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3" style="color: black; font-weight: bold;">Citation</h2>
+        </div>
+      </div>
+      <div class="bibtex-box">
+        <button class="bibtex-copy" id="bibtexCopy" type="button">Copy</button>
+        <pre id="bibtex">@article{lin2025embrace,
+  title={EmbRACE: Embodied Reasoning and Action in Complex Environments},
+  author={Lin, Mingxian and Huang, Wei and Li, Yitang and Jiang, Chengjie and Wu, Kui and Zhong, Fangwei and Chen, Weikai and Qian, Shengju and Wang, Xin and Qi, Xiaojuan},
+  journal={arXiv preprint arXiv:2507.10548},
+  year={2025}
+}</pre>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Copy the BibTeX. The clipboard API needs a secure page, so a plain http preview falls
+    // back to selecting a hidden textarea.
+    (function () {
+      const button = document.getElementById("bibtexCopy");
+      const text = document.getElementById("bibtex").textContent;
+      button.addEventListener("click", async () => {
+        let copied = false;
+        try {
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+            copied = true;
+          }
+        } catch (err) {}
+        if (!copied) {
+          const area = document.createElement("textarea");
+          area.value = text;
+          area.setAttribute("readonly", "");
+          area.style.position = "fixed";
+          area.style.opacity = "0";
+          document.body.appendChild(area);
+          area.select();
+          try { copied = document.execCommand("copy"); } catch (err) {}
+          area.remove();
+        }
+        button.textContent = copied ? "Copied" : "Select and copy";
+        setTimeout(() => { button.textContent = "Copy"; }, 1500);
+      });
+    })();
+  </script>
+
 </body>
+
+
+
+
+
+
+<script src="./static/js/bulma-carousel.min.js"></script>
 
 
 <script>
@@ -745,16 +704,16 @@
   });
 </script>
 
-
-
-<!-- 页面加载后自动触发更新 -->
 <script>
   window.addEventListener("DOMContentLoaded", () => {
     updateBaselineVideos();
+    updateRealVideos();
   });
 </script>
 
+
 <script src="static/js/data_viewer.js" defer></script>
 <script src="static/js/baseline_viewer.js" defer></script>
+<script src="static/js/real_viewer.js" defer></script>
 
 </html>

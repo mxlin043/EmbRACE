@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EmbRACE Viewer</title>
+<!--
+  Read-only viewer for the project page. It needs no server and opens straight from
+  the folder.
+
+  Dataset    the demonstrations the page's Data Example section already ships
+             (js/data_viewer.js, data/), read in place, each step with
+             its rationale.
+  Benchmark  three tasks per type from the held-out test environments
+             (js/benchmark_data.js, benchmark/), each with the reference
+             human demonstration and its two canonical success-region images (the
+             top-down plot and the scene overlay; a midway and a final pair for
+             Multi-stage). Test maps carry no rationales.
+
+  ?set=dataset|benchmark  ?task=<stem>  ?step=<n>  open a given demonstration and step.
+  ?theme=dark switches to the dark palette; light, matching the page, is the default.
+-->
+<style>
+:root, [data-theme="light"] {
+  --bg:#f5f5f7; --panel:#ffffff; --panel2:#fafafa; --head:#ffffff; --line:#e6e6e6; --line2:#eeeeee;
+  --text:#222222; --text2:#333333; --muted:#6b6b6b; --faint:#a8a8a8;
+  --accent:#FF3B30; --accent-soft:rgba(255,59,48,.07); --accent-line:rgba(255,59,48,.45);
+  --hover:#f7f7f8; --img-bg:#f4f4f4; --card:#fcfcfc; --card-line:#ececec;
+  --t0:#FF3B30; --t1:#FF9F0A; --t2:#e0b000; --t3:#32D74B; --t4:#40C8E0; --t5:#5E5CE6;
+  --move:#388E3C; --turn:#7C4DFF; --look:#c05ad8; --interact:#E64A19; --finish:#e0a800; --midway:#d49b00; --idle:#999999;
+}
+[data-theme="dark"] {
+  --bg:#0b0d12; --panel:#12151c; --panel2:#171b24; --head:#0e1117; --line:#252a35; --line2:#20242e;
+  --text:#eceef2; --text2:#d6d9df; --muted:#8a90a0; --faint:#5a6070;
+  --accent:#FF453A; --accent-soft:rgba(255,69,58,.12); --accent-line:rgba(255,69,58,.5);
+  --hover:#1a1f29; --img-bg:#07090d; --card:#161a22; --card-line:#262b36;
+  --t0:#FF453A; --t1:#FF9F0A; --t2:#FFD60A; --t3:#32D74B; --t4:#40C8E0; --t5:#7d7bff;
+  --move:#4caf50; --turn:#8f6bff; --look:#ea80fc; --interact:#ff6a3d; --finish:#fbc02d; --midway:#ffe57f; --idle:#969696;
+}
+* { box-sizing:border-box; }
+html,body { margin:0; height:100%; overflow:hidden; background:var(--bg); color:var(--text);
+  font-family:"Google Sans","Noto Sans","Segoe UI",Helvetica,Arial,sans-serif; }
+button,input { font:inherit; }
+.app { height:100vh; display:grid; grid-template-rows:58px 1fr; }
+header { display:flex; align-items:center; gap:14px; padding:0 20px; border-bottom:1px solid var(--line); background:var(--head); }
+.brand { font-weight:700; font-size:20px; letter-spacing:.2px; color:var(--text); display:flex; align-items:baseline; gap:6px; }
+/* Letter colours match the page title. */
+.wordmark span { font-weight:800; }
+.header-stats { margin-left:auto; display:flex; gap:8px; }
+.pill { padding:5px 11px; border:1px solid var(--line); border-radius:999px; color:var(--muted); font-size:12px; background:var(--panel); }
+.workspace { min-height:0; display:grid; grid-template-columns:380px 350px minmax(520px,1fr); }
+.column { min-height:0; border-right:1px solid var(--line); background:var(--panel); display:flex; flex-direction:column; }
+.column:last-child { border-right:0; background:var(--bg); }
+.column-head { padding:12px 14px; border-bottom:1px solid var(--line); }
+.scroll { min-height:0; overflow:auto; }
+.controls { display:grid; gap:9px; }
+/* Dataset / Benchmark: the one choice everything else depends on, so it gets the full width. */
+.set-switch { display:grid; grid-template-columns:1fr 1fr; border:1px solid var(--line); border-radius:9px; overflow:hidden; background:var(--panel2); }
+.set-btn { border:0; background:transparent; color:var(--muted); padding:8px 0; cursor:pointer; font-size:13px; font-weight:700; }
+.set-btn + .set-btn { border-left:1px solid var(--line); }
+.set-btn:hover { color:var(--text); }
+.set-btn.active { background:var(--accent); color:#fff; }
+.set-note { color:var(--muted); font-size:11.5px; line-height:1.4; }
+#search { width:100%; padding:7px 10px; border:1px solid var(--line); border-radius:7px; background:var(--panel2); color:var(--text); font-size:12px; outline:none; }
+#search:focus { border-color:var(--accent-line); }
+#search::placeholder { color:var(--faint); }
+.filter-row { display:flex; align-items:center; gap:4px; flex-wrap:wrap; }
+.filter { border:1px solid var(--line); background:var(--panel2); color:var(--muted); border-radius:5px; padding:2px 9px; cursor:pointer; font-size:11px; transition:all .15s; }
+.filter:hover { border-color:var(--accent-line); color:var(--text); }
+.filter.active { color:var(--accent); border-color:var(--accent-line); background:var(--accent-soft); font-weight:700; }
+.task-table-head,.task { display:grid; grid-template-columns:24px minmax(0,1fr) 30px 116px; align-items:center; gap:6px; }
+.task-table-head { padding:6px 12px; background:var(--panel2); border-bottom:1px solid var(--line); color:var(--muted); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
+.task { width:100%; text-align:left; border:0; border-bottom:1px solid var(--line2); background:transparent; color:var(--text); padding:7px 12px; cursor:pointer; font-size:12px; }
+.task:hover { background:var(--hover); }
+.task.active { background:var(--accent-soft); box-shadow:inset 3px 0 0 var(--accent); }
+.task-index { color:var(--faint); font-size:11px; }
+.task-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px; }
+.task-map { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); font-size:11px; }
+.type-badge { display:inline-block; text-align:center; border-radius:4px; padding:1px 0; font-size:10px; font-weight:800; color:#fff; }
+.type-0 { background:var(--t0); } .type-1 { background:var(--t1); } .type-2 { background:var(--t2); }
+.type-3 { background:var(--t3); } .type-4 { background:var(--t4); } .type-5 { background:var(--t5); }
+.foot { flex:0 0 auto; padding:8px 12px; border-top:1px solid var(--line); background:var(--panel2); color:var(--muted); font-size:11px; }
+.summary { display:grid; gap:10px; }
+.task-id-card { border:1px solid var(--card-line); border-radius:9px; padding:8px 10px; background:var(--card); }
+.task-id-head { display:flex; align-items:center; justify-content:space-between; }
+.label { color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.6px; font-weight:700; }
+.copy-btn { border:1px solid var(--line); background:var(--panel); color:var(--muted); border-radius:5px; padding:1px 8px; font-size:11px; cursor:pointer; }
+.copy-btn:hover { color:var(--accent); border-color:var(--accent-line); }
+.task-id-value { display:block; margin-top:4px; font-size:12px; word-break:break-all; color:var(--text); }
+.facts { display:grid; grid-template-columns:auto 1fr; gap:4px 12px; font-size:12.5px; }
+.facts .k { color:var(--muted); }
+/* The instruction reads like the page's Data Example: a small red label and the sentence. */
+.instruction { font-size:14.5px; line-height:1.45; font-weight:600; color:var(--text); padding:10px 12px;
+  border:1px solid var(--card-line); border-radius:9px; background:var(--card); }
+.instruction .lab { display:block; color:var(--accent); font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:.6px; margin-bottom:3px; }
+.action { width:100%; display:grid; grid-template-columns:34px 1fr; align-items:center; gap:8px; text-align:left; border:0; border-bottom:1px solid var(--line2); background:transparent; color:var(--text); padding:8px 14px; cursor:pointer; }
+.action:hover { background:var(--hover); }
+.action.active { background:var(--accent-soft); box-shadow:inset 3px 0 0 var(--accent); }
+.action-index { color:var(--faint); font-size:11px; font-family:ui-monospace,monospace; }
+.action-name { font-weight:700; font-size:13px; }
+.detail { height:100%; overflow:auto; padding:16px 20px 24px; }
+.detail-head { display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+.step { display:inline-flex; align-items:baseline; gap:4px; }
+.step-now { font-size:22px; font-weight:800; color:var(--accent); line-height:1; }
+.step-sep { font-size:15px; color:var(--faint); }
+.step-all { font-size:15px; font-weight:700; color:var(--muted); }
+.step-word { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--faint); margin-left:3px; }
+/* The same pill the page draws for the current action. */
+.act-pill { display:inline-block; padding:4px 13px; border-radius:999px; color:#fff; font-size:13px; font-weight:800; letter-spacing:.02em; white-space:nowrap; }
+.ref-tag { color:var(--muted); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
+.step-nav { margin-left:auto; display:inline-flex; border-radius:9px; overflow:hidden; box-shadow:0 1px 2px rgba(0,0,0,.08); }
+.nav-btn { border:0; background:var(--accent); color:#fff; padding:6px 14px; cursor:pointer; font-size:12.5px; font-weight:700; }
+.nav-btn + .nav-btn { border-left:1px solid rgba(255,255,255,.35); }
+.nav-btn:hover:not(:disabled) { filter:brightness(.92); }
+.nav-btn:disabled { background:#dcdcdc; color:#fff; cursor:default; }
+[data-theme="dark"] .nav-btn:disabled { background:#343a46; color:#8a90a0; }
+.images { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.image-card { position:relative; border-radius:10px; overflow:hidden; background:var(--img-bg); aspect-ratio:4/3; }
+.image-card img { width:100%; height:100%; object-fit:contain; display:block; }
+.image-label { position:absolute; top:8px; left:8px; background:rgba(0,0,0,.6); color:#fff; font-size:11px; font-weight:700; padding:3px 8px; border-radius:5px; }
+.image-card .none { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:13px; }
+/* The rationale card follows the page's Data Example side panel: a light card, dark text,
+   and the label in the page's accent, rather than a black block of its own. */
+.rationale { margin-top:16px; border:1px solid var(--card-line); border-radius:10px; background:var(--card); padding:14px 18px; }
+.rationale .rl { display:block; color:var(--accent); font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.6px; margin-bottom:6px; }
+.rationale .rt { font-size:15.5px; line-height:1.62; color:var(--text2); }
+/* Success region: the two canonical images a benchmark task is judged against, in the
+   place the rationale card takes in the dataset view. */
+.region { margin-top:16px; border:1px solid var(--card-line); border-radius:10px; background:var(--card); padding:14px 18px 16px; }
+.region .rl { display:block; color:var(--accent); font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.6px; margin-bottom:2px; }
+.region .rn { color:var(--muted); font-size:12.5px; line-height:1.5; margin-bottom:10px; }
+.region-stage { margin-top:10px; }
+.region-stage + .region-stage { margin-top:14px; }
+.stage-tag { display:inline-block; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; color:var(--text2); margin-bottom:6px; }
+.region-pair { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.region-img { position:relative; border-radius:9px; overflow:hidden; aspect-ratio:4/3; background:#ffffff; border:1px solid var(--card-line); cursor:zoom-in; padding:0; }
+.region-img img { width:100%; height:100%; object-fit:contain; display:block; }
+.region-fig { margin:0; }
+.region-fig figcaption { margin-top:5px; color:var(--muted); font-size:11.5px; font-weight:600; text-align:center; }
+.zoom { position:fixed; inset:0; background:rgba(10,12,16,.82); display:none; align-items:center; justify-content:center; z-index:50; cursor:zoom-out; padding:24px; }
+.zoom.open { display:flex; }
+.zoom img { max-width:100%; max-height:100%; border-radius:8px; background:#fff; box-shadow:0 10px 40px rgba(0,0,0,.4); }
+.empty { padding:24px; color:var(--muted); font-size:13px; text-align:center; }
+.keys { color:var(--faint); font-size:11px; margin-top:12px; }
+@media (max-width:1200px) {
+  html,body { overflow:auto; height:auto; }
+  .app { height:auto; }
+  .workspace { grid-template-columns:1fr; }
+  .column { border-right:0; border-bottom:1px solid var(--line); }
+  .scroll { max-height:340px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <span class="wordmark"><span style="color:#FF3B30">E</span><span style="color:#FF9F0A">m</span><span style="color:#FFD60A">b</span><span style="color:#32D74B">R</span><span style="color:#40C8E0">A</span><span style="color:#5E5CE6">C</span><span style="color:#FF2D9B">E</span></span>
+      <span>Viewer</span>
+    </div>
+    <div class="header-stats"><span class="pill" id="taskCount">0 tasks</span></div>
+  </header>
+  <main class="workspace">
+    <section class="column">
+      <div class="column-head">
+        <div class="controls">
+          <div class="set-switch" role="tablist">
+            <button class="set-btn" data-set="dataset" type="button" role="tab">Dataset</button>
+            <button class="set-btn" data-set="benchmark" type="button" role="tab">Benchmark</button>
+          </div>
+          <div class="set-note" id="setNote"></div>
+          <input id="search" placeholder="Search task, environment or instruction…" aria-label="Search tasks">
+          <div class="filter-row" id="typeFilter"></div>
+        </div>
+      </div>
+      <div class="task-table-head"><span>#</span><span>Task</span><span>Type</span><span>Environment</span></div>
+      <div class="scroll" id="taskList" style="flex:1"><div class="empty">Loading…</div></div>
+      <div class="foot" id="foot"></div>
+    </section>
+    <section class="column">
+      <div class="column-head"><div id="taskSummary"><div class="empty">Select a task.</div></div></div>
+      <div class="scroll" id="actionList" style="flex:1"></div>
+    </section>
+    <section class="column">
+      <div class="detail" id="detail"><div class="empty">Select a task to walk through its steps.</div></div>
+    </section>
+  </main>
+</div>
+
+<div class="zoom" id="zoom" role="dialog" aria-label="Enlarged image"><img id="zoomImg" alt=""></div>
+
+<!-- data_viewer.js drives the page's own Data Example section when it loads. These
+     hidden stand-ins give it the elements it expects, so its data can be read here
+     without touching the page's code. -->
+<div hidden aria-hidden="true">
+  <select id="task-type"></select><select id="task-item"></select>
+  <div id="instruction"></div><img id="step-image" alt="">
+  <div id="step-id"></div><div id="action-box"></div><div id="thinking-box"></div>
+  <div id="step-dots"></div><button id="prev-step" type="button"></button><button id="next-step" type="button"></button>
+</div>
+<script src="js/data_viewer.js"></script>
+<script src="js/benchmark_data.js"></script>
+
+<script>
+(function () {
+  "use strict";
+
+  const params = new URLSearchParams(window.location.search);
+  document.documentElement.dataset.theme = params.get("theme") === "dark" ? "dark" : "light";
+
+  const TYPES = ["Basic", "Exploration", "Dynamic_Spatial-Semantic", "Multi-stage",
+                 "Interaction_Open-Door", "Interaction_Pick-and-Drop"];
+  const TYPE_INDEX = Object.fromEntries(TYPES.map((t, i) => [t, i]));
+  const TYPE_NAMES = {
+    "Basic": "Basic", "Exploration": "Exploration",
+    "Dynamic_Spatial-Semantic": "Dynamic Spatial-Semantic", "Multi-stage": "Multi-stage",
+    "Interaction_Open-Door": "Open Door", "Interaction_Pick-and-Drop": "Pick & Drop"
+  };
+  const SETS = {
+    dataset: {
+      note: "Training demonstrations, each step with the rationale for its action.",
+      source: () => (typeof EMBRACE_DATA === "undefined" ? null : EMBRACE_DATA),
+      root: "data", rationale: true
+    },
+    benchmark: {
+      note: "Held-out test tasks, each with its reference human demonstration and the success region it is judged against.",
+      source: () => (typeof EMBRACE_BENCHMARK === "undefined" ? null : EMBRACE_BENCHMARK),
+      root: "benchmark", rationale: false
+    }
+  };
+  // The action families of the qualitative videos, so the two agree.
+  const ACTION_FAMILY = {
+    MoveForward: "move", MoveBackward: "move", JumpForward: "move",
+    TurnLeft: "turn", TurnRight: "turn",
+    LookUp: "look", LookDown: "look", LookBack: "look", LookHand: "look",
+    OpenDoor: "interact", Pick: "interact", Drop: "interact",
+    PickObject: "interact", DropObject: "interact",
+    Finish: "finish", MidwayTarget: "midway", Idle: "idle"
+  };
+  const actionColor = name => `var(--${ACTION_FAMILY[name] || "idle"})`;
+  const esc = value => { const d = document.createElement("div"); d.textContent = value ?? ""; return d.innerHTML; };
+
+  const state = { set: "dataset", all: {}, tasks: [], filtered: [], type: "all", task: null, step: 0 };
+
+  function collect(setName) {
+    const spec = SETS[setName];
+    const source = spec.source();
+    if (!source) return [];
+    const tasks = [];
+    TYPES.forEach(type => {
+      Object.entries(source[type] || {}).forEach(([stem, entry]) => {
+        tasks.push({
+          set: setName, type, typeIndex: TYPE_INDEX[type], stem, map: entry.map,
+          instruction: entry.instruction, images: entry.images, actions: entry.actions,
+          thinking: spec.rationale ? entry.thinking : null,
+          regions: entry.regions || null,
+          base: `${spec.root}/${type}/${stem}`
+        });
+      });
+    });
+    return tasks;
+  }
+
+  function switchSet(setName, keepTask) {
+    state.set = setName;
+    state.tasks = state.all[setName];
+    state.type = "all";
+    state.task = null;
+    document.querySelectorAll(".set-btn").forEach(b =>
+      b.classList.toggle("active", b.dataset.set === setName));
+    document.getElementById("setNote").textContent = SETS[setName].note;
+    document.getElementById("foot").textContent =
+      `${state.tasks.length} tasks · ${new Set(state.tasks.map(t => t.map)).size} environments`;
+    buildTypeFilter();
+    applyFilters();
+    const first = (keepTask && state.tasks.find(t => t.stem === keepTask)) || state.tasks[0];
+    if (first) selectTask(first);
+    else {
+      document.getElementById("taskSummary").innerHTML = '<div class="empty">No tasks.</div>';
+      document.getElementById("actionList").innerHTML = "";
+      document.getElementById("detail").innerHTML = '<div class="empty">No tasks in this set.</div>';
+    }
+  }
+
+  function buildTypeFilter() {
+    const row = document.getElementById("typeFilter");
+    const counts = {};
+    state.tasks.forEach(t => { counts[t.type] = (counts[t.type] || 0) + 1; });
+    row.innerHTML = `<button class="filter active" data-value="all" type="button">All</button>` +
+      TYPES.filter(t => counts[t]).map(t =>
+        `<button class="filter" data-value="${esc(t)}" type="button" title="${esc(TYPE_NAMES[t])}">T${TYPE_INDEX[t]}</button>`).join("");
+    row.querySelectorAll(".filter").forEach(button => button.addEventListener("click", () => {
+      row.querySelectorAll(".filter").forEach(b => b.classList.remove("active"));
+      button.classList.add("active");
+      state.type = button.dataset.value;
+      applyFilters();
+    }));
+  }
+
+  function applyFilters() {
+    const q = document.getElementById("search").value.trim().toLowerCase();
+    state.filtered = state.tasks.filter(t =>
+      (state.type === "all" || t.type === state.type) &&
+      (!q || t.stem.toLowerCase().includes(q) || t.map.toLowerCase().includes(q) ||
+       t.instruction.toLowerCase().includes(q)));
+    document.getElementById("taskCount").textContent =
+      `${state.filtered.length}/${state.tasks.length} tasks`;
+    renderTasks();
+  }
+
+  function renderTasks() {
+    const list = document.getElementById("taskList");
+    if (!state.filtered.length) { list.innerHTML = '<div class="empty">No matching tasks.</div>'; return; }
+    list.innerHTML = state.filtered.map((t, i) => `
+      <button class="task${state.task === t ? " active" : ""}" data-i="${i}" type="button" title="${esc(t.instruction)}">
+        <span class="task-index">${i + 1}</span>
+        <span class="task-name">${esc(t.stem)}</span>
+        <span class="type-badge type-${t.typeIndex}" title="${esc(TYPE_NAMES[t.type])}">T${t.typeIndex}</span>
+        <span class="task-map">${esc(t.map)}</span>
+      </button>`).join("");
+    list.querySelectorAll(".task").forEach(b =>
+      b.addEventListener("click", () => selectTask(state.filtered[Number(b.dataset.i)])));
+  }
+
+  function selectTask(task) {
+    state.task = task; state.step = 0;
+    renderTasks(); renderSummary(); renderActions(); renderDetail();
+  }
+
+  function renderSummary() {
+    const t = state.task;
+    document.getElementById("taskSummary").innerHTML = `
+      <div class="summary">
+        <div class="task-id-card">
+          <div class="task-id-head"><span class="label">Task ID</span><button class="copy-btn" id="copyId" type="button">Copy</button></div>
+          <code class="task-id-value">${esc(t.stem)}</code>
+        </div>
+        <div class="facts">
+          <span class="k">Type</span><span>T${t.typeIndex} · ${esc(TYPE_NAMES[t.type])}</span>
+          <span class="k">Environment</span><span>${esc(t.map)}</span>
+          <span class="k">Steps</span><span>${t.actions.length}</span>
+        </div>
+        <div class="instruction"><span class="lab">Instruction</span>${esc(t.instruction)}</div>
+      </div>`;
+    document.getElementById("copyId").addEventListener("click", async (e) => {
+      const text = t.stem, btn = e.currentTarget;
+      try {
+        if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(text);
+        else {
+          const a = document.createElement("textarea");
+          a.value = text; a.style.position = "fixed"; a.style.opacity = "0";
+          document.body.appendChild(a); a.select(); document.execCommand("copy"); a.remove();
+        }
+        btn.textContent = "Copied"; setTimeout(() => { btn.textContent = "Copy"; }, 1000);
+      } catch (err) { btn.textContent = "Select ID"; }
+    });
+  }
+
+  function renderActions() {
+    const list = document.getElementById("actionList");
+    list.innerHTML = state.task.actions.map((a, i) => `
+      <button class="action${i === state.step ? " active" : ""}" data-i="${i}" type="button">
+        <span class="action-index">${String(i + 1).padStart(2, "0")}</span>
+        <span class="action-name" style="color:${actionColor(a)}">${esc(a)}</span>
+      </button>`).join("");
+    list.querySelectorAll(".action").forEach(b =>
+      b.addEventListener("click", () => selectStep(Number(b.dataset.i))));
+    const active = list.querySelector(".action.active");
+    if (active) active.scrollIntoView({ block: "nearest" });
+  }
+
+  function selectStep(i) {
+    if (!state.task || i < 0 || i >= state.task.actions.length) return;
+    state.step = i; renderActions(); renderDetail();
+  }
+
+  function renderDetail() {
+    const t = state.task, i = state.step, n = t.actions.length;
+    const action = t.actions[i];
+    const after = i + 1 < t.images.length
+      ? `<img src="${esc(t.base)}/${esc(t.images[i + 1])}" alt="Ego view after the action">`
+      : `<div class="none">End of the demonstration</div>`;
+    const rationale = t.thinking
+      ? `<div class="rationale"><span class="rl">Rationale</span><div class="rt">${esc(t.thinking[i])}</div></div>`
+      : "";
+    const tag = t.set === "benchmark" ? `<span class="ref-tag">Reference demonstration</span>` : "";
+    const region = t.regions ? regionHtml(t) : "";
+    document.getElementById("detail").innerHTML = `
+      <div class="detail-head">
+        <span class="step"><span class="step-now">${i + 1}</span><span class="step-sep">/</span><span class="step-all">${n}</span><span class="step-word">steps</span></span>
+        <span class="act-pill" style="background:${actionColor(action)}">${esc(action)}</span>
+        ${tag}
+        <div class="step-nav">
+          <button class="nav-btn" id="prev" type="button" ${i === 0 ? "disabled" : ""}>← Previous</button>
+          <button class="nav-btn" id="next" type="button" ${i === n - 1 ? "disabled" : ""}>Next →</button>
+        </div>
+      </div>
+      <div class="images">
+        <div class="image-card"><span class="image-label">Before Action</span><img src="${esc(t.base)}/${esc(t.images[i])}" alt="Ego view before the action"></div>
+        <div class="image-card"><span class="image-label">After Action</span>${after}</div>
+      </div>
+      ${rationale}
+      ${region}
+      <div class="keys">← → or ↑ ↓ to move between steps · click a success-region image to enlarge it</div>`;
+    document.getElementById("prev").addEventListener("click", () => selectStep(i - 1));
+    document.getElementById("next").addEventListener("click", () => selectStep(i + 1));
+    document.querySelectorAll(".region-img").forEach(b => b.addEventListener("click", () => {
+      document.getElementById("zoomImg").src = b.dataset.src;
+      document.getElementById("zoom").classList.add("open");
+    }));
+  }
+
+  function regionHtml(t) {
+    const pair = st => `
+      <div class="region-pair">
+        <figure class="region-fig">
+          <button class="region-img" type="button" data-src="${esc(t.base)}/${esc(st.xy)}">
+            <img src="${esc(t.base)}/${esc(st.xy)}" alt="Top-down plot of the success region">
+          </button>
+          <figcaption>Top-down plot</figcaption>
+        </figure>
+        <figure class="region-fig">
+          <button class="region-img" type="button" data-src="${esc(t.base)}/${esc(st.ue)}">
+            <img src="${esc(t.base)}/${esc(st.ue)}" alt="Success region drawn over the scene">
+          </button>
+          <figcaption>Scene overlay</figcaption>
+        </figure>
+      </div>`;
+    const multi = t.regions.length > 1;
+    const stages = t.regions.map(st => `
+      <div class="region-stage">
+        ${multi ? `<span class="stage-tag">${st.stage === "midway" ? "Midway target" : "Final target"}</span>` : ""}
+        ${pair(st)}
+      </div>`).join("");
+    return `<div class="region"><span class="rl">Success region</span>
+      <div class="rn">The orange box is the target's footprint, and the outlined area around it is the success region.</div>
+      ${stages}</div>`;
+  }
+
+  const zoom = document.getElementById("zoom");
+  zoom.addEventListener("click", () => zoom.classList.remove("open"));
+
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && zoom.classList.contains("open")) { zoom.classList.remove("open"); return; }
+    if (zoom.classList.contains("open")) return;
+    if (!state.task || e.target.matches("input,textarea,select")) return;
+    if (["ArrowDown", "ArrowRight", "j"].includes(e.key)) { e.preventDefault(); selectStep(state.step + 1); }
+    if (["ArrowUp", "ArrowLeft", "k"].includes(e.key)) { e.preventDefault(); selectStep(state.step - 1); }
+  });
+
+  try {
+    state.all = { dataset: collect("dataset"), benchmark: collect("benchmark") };
+    document.querySelectorAll(".set-btn").forEach(b =>
+      b.addEventListener("click", () => { if (b.dataset.set !== state.set) switchSet(b.dataset.set); }));
+    document.getElementById("search").addEventListener("input", applyFilters);
+    const wantSet = params.get("set") === "benchmark" ? "benchmark" : "dataset";
+    switchSet(wantSet, params.get("task"));
+    const step = parseInt(params.get("step") || "1", 10);
+    if (state.task && step > 1) selectStep(Math.min(step, state.task.actions.length) - 1);
+  } catch (err) {
+    document.getElementById("taskList").innerHTML = `<div class="empty">${esc(err.message)}</div>`;
+  }
+})();
+</script>
+</body>
+</html>
