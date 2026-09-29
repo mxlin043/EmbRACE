@@ -1,0 +1,10 @@
+{
+    "task_types": [
+        {"id": 0, "name": "Basic"},
+        {"id": 1, "name": "Exploration"},
+        {"id": 2, "name": "Dynamic Spatial-Semantic"},
+        {"id": 3, "name": "Multi-stage"},
+        {"id": 4, "name": "Open Door"},
+        {"id": 5, "name": "Pick & Drop"}
+    ]
+}

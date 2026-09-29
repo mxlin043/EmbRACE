@@ -1,0 +1,23 @@
+{
+    "Instruction": "Pick up the metal bucket near the red telephone booth.",
+    "Type": 5,
+    "Start_Pose": [
+        3142.762,
+        -2449.712,
+        141.667,
+        -0.05,
+        -115.533,
+        0
+    ],
+    "PD_ID": 18,
+    "PD_Size": 2.0,
+    "PD_Type": "p",
+    "PD_Start_Pose": [
+        1889.019,
+        -3198.294,
+        83.15,
+        0,
+        0,
+        0
+    ]
+}

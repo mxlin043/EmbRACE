@@ -1,0 +1,126 @@
+# VLM routing for embrace.eval.eval_vlm
+#
+# For a --model NAME the evaluator picks the FIRST entry under `models:` whose
+# `match` (exact name or shell-style glob, or a list of them) fits NAME, then
+# builds the request settings by merging, later wins:
+#
+#     defaults  <  providers[entry.provider]  <  sampling preset  <  the entry itself
+#
+# and finally the command-line flags --api_base / --api_key / --protocol.
+#
+# NAME is also the folder the results are written to (runs/<Map>/<task>/NAME),
+# so give every configuration you want to compare its own name.
+#
+# Never put a secret in this file. `api_key_env` names the environment variable
+# that holds the key. Any string may use ${VAR} or ${VAR:-default}.
+#
+# Keys
+#   protocol        openai (chat/completions) | anthropic (messages)
+#   api_base        base URL; /chat/completions or /v1/messages is appended
+#   api_key_env     environment variable holding the key; null = no auth header
+#   api_model       model id sent in the request (default: NAME)
+#   temperature     null = do not send (for models that reject it)
+#   max_tokens      output budget per step; null = do not send (the API default applies)
+#   timeout         seconds per request
+#   sampling        name of a preset below, or an inline mapping of
+#                   temperature / top_p / top_k / min_p / presence_penalty / max_tokens
+#   extra_body      extra fields merged into the request body as-is
+#   reasoning_tag   think | reasoning: tag the model is asked to wrap its reasoning in
+#   guided_regex    true = constrain the reply format with vLLM structured outputs
+
+defaults:
+  temperature: 0.5
+  max_tokens: null      # GPT-5 / o-series reject max_tokens; thinking models need their full budget
+  timeout: 120
+  reasoning_tag: think
+  guided_regex: false
+
+providers:
+  openai:
+    protocol: openai
+    api_base: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+    api_key_env: OPENAI_API_KEY
+  anthropic:
+    protocol: anthropic
+    api_base: ${ANTHROPIC_BASE_URL:-https://api.anthropic.com}
+    api_key_env: ANTHROPIC_API_KEY
+    max_tokens: 4096      # required by the Messages API
+  gemini:
+    # Google's OpenAI-compatible endpoint
+    protocol: openai
+    api_base: https://generativelanguage.googleapis.com/v1beta/openai
+    api_key_env: GEMINI_API_KEY
+  local_vllm:
+    # Any OpenAI-compatible server you run yourself (vLLM, SGLang, LMDeploy, ...).
+    # Point VLLM_API_BASE at another host/port, or add one provider per server.
+    protocol: openai
+    api_base: ${VLLM_API_BASE:-http://127.0.0.1:8000/v1}
+    api_key_env: null
+    max_tokens: 8192
+    # Open-weight models are asked for <reasoning>: Qwen3 reserves <think> as
+    # special tokens that its instruct models never emit. Parsing accepts both.
+    reasoning_tag: reasoning
+
+sampling_presets:
+  # Vendor-recommended values. Without presence_penalty the Qwen instruct
+  # models tend to repeat one action until the step budget runs out.
+  qwen_instruct:
+    temperature: 0.7
+    top_p: 0.8
+    top_k: 20
+    min_p: 0.0
+    presence_penalty: 1.5
+  glm_thinking:
+    temperature: 0.8
+    top_p: 0.6
+    top_k: 2
+    max_tokens: 3072
+
+models:
+  # ---------------------------------------------------------- API models
+  - match: gpt-5*
+    provider: openai
+    temperature: null            # GPT-5 models reject a custom temperature
+  - match: [gpt-*, o1*, o3*, o4*]
+    provider: openai
+  - match: [claude-opus-4-7*, claude-opus-4-8*, claude-opus-5*, claude-sonnet-5*, claude-haiku-5*]
+    provider: anthropic
+    temperature: null            # these models reject a custom temperature
+  - match: claude-*
+    provider: anthropic
+  - match: gemini-*
+    provider: gemini
+
+  # ------------------------------------------ open-weight models (vLLM)
+  # Serve each one with --served-model-name equal to `api_model` (see README 6.3).
+  - match: qwen3-vl-8b           # Qwen/Qwen3-VL-8B-Instruct
+    provider: local_vllm
+    sampling: qwen_instruct
+  - match: qwen3-vl-2b           # Qwen/Qwen3-VL-2B-Instruct
+    provider: local_vllm
+    sampling: qwen_instruct
+  - match: [qwen35-9b, qwen35-2b]   # Qwen/Qwen3.5-9B, Qwen/Qwen3.5-2B
+    provider: local_vllm
+    sampling: qwen_instruct
+    extra_body:
+      chat_template_kwargs: {enable_thinking: false}
+  - match: internvl3-8b          # OpenGVLab/InternVL3-8B
+    provider: local_vllm
+  - match: glm-4.1v-9b           # zai-org/GLM-4.1V-9B-Thinking
+    provider: local_vllm
+    sampling: glm_thinking
+    # GLM-4.1V-Thinking writes <think> on its own; asking for another tag makes
+    # it write the reasoning twice.
+    reasoning_tag: think
+    # Without guided decoding it sometimes deliberates until max_tokens and never
+    # emits an action (vLLM structured outputs, vLLM >= 0.11).
+    guided_regex: true
+
+  # ------------------------------------------------ your own models
+  # Example: a fine-tuned checkpoint on a second server. The results folder is
+  # `my-qwen-sft`, the request asks the server for `qwen-sft`.
+  # - match: my-qwen-sft
+  #   provider: local_vllm
+  #   api_base: http://127.0.0.1:8001/v1
+  #   api_model: qwen-sft
+  #   sampling: qwen_instruct

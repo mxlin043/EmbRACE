@@ -1,0 +1,183 @@
+{
+    "Instruction": "Cross the lawn to the dark front door on the blue house's porch and open it.",
+    "Type": 4,
+    "Start_Pose": [
+        269.0,
+        -778.648,
+        115.64,
+        0.0,
+        -125.827,
+        0.0
+    ],
+    "Action": [
+        "TurnRight",
+        "MoveForward",
+        "MoveForward",
+        "MoveForward",
+        "TurnRight",
+        "MoveForward",
+        "MoveForward",
+        "MoveForward",
+        "OpenDoor",
+        "MoveForward",
+        "TurnLeft",
+        "TurnLeft",
+        "OpenDoor",
+        "Finish"
+    ],
+    "Pose_Trajectory": [
+        [
+            269.0,
+            -778.648,
+            115.64,
+            0.0,
+            -125.827,
+            0.0
+        ],
+        [
+            269.0,
+            -778.648,
+            115.64,
+            0.0,
+            -100.827,
+            0.0
+        ],
+        [
+            245.358,
+            -902.267,
+            123.807,
+            0.0,
+            -100.827,
+            0.0
+        ],
+        [
+            221.716,
+            -1025.885,
+            131.973,
+            0.0,
+            -100.827,
+            0.0
+        ],
+        [
+            198.074,
+            -1149.504,
+            144.62,
+            0.0,
+            -100.827,
+            0.0
+        ],
+        [
+            198.074,
+            -1149.504,
+            144.62,
+            0.0,
+            -75.827,
+            0.0
+        ],
+        [
+            228.891,
+            -1271.532,
+            148.188,
+            0.0,
+            -75.827,
+            0.0
+        ],
+        [
+            259.708,
+            -1393.56,
+            148.188,
+            0.0,
+            -75.827,
+            0.0
+        ],
+        [
+            290.524,
+            -1515.588,
+            165.1,
+            0.0,
+            -75.827,
+            0.0
+        ],
+        [
+            290.524,
+            -1515.588,
+            165.1,
+            0.0,
+            -75.827,
+            0.0
+        ],
+        [
+            318.501,
+            -1554.709,
+            165.15,
+            0.0,
+            -75.827,
+            0.0
+        ],
+        [
+            318.501,
+            -1554.709,
+            165.15,
+            0.0,
+            -100.827,
+            0.0
+        ],
+        [
+            318.501,
+            -1554.709,
+            165.15,
+            0.0,
+            -125.827,
+            0.0
+        ],
+        [
+            318.501,
+            -1554.709,
+            165.15,
+            0.0,
+            -125.827,
+            0.0
+        ],
+        [
+            318.501,
+            -1554.709,
+            165.15,
+            0.0,
+            -125.827,
+            0.0
+        ]
+    ],
+    "Door_State_Trajectory": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1
+    ],
+    "Rationale": [
+        "The blue house's porch with the dark front door sits toward the right edge of my view, while the lawn and shrubbery fill the left side. I will turn right so the door and the concrete walkway leading to it come into the center of my heading before I start crossing.",
+        "The dark front door is now near the middle of my view with the walkway running straight ahead toward the porch steps. I will move forward across the lawn to close the large remaining distance to that door.",
+        "The porch roof and the dark door have grown noticeably larger, so my heading along the walkway is carrying me toward the target. Nothing blocks the path ahead, so I will continue forward to shorten the gap.",
+        "The porch decking and door frame now dominate my view, but I am still out on the walkway rather than within reach of the door. I will advance again to get close enough that the handle would be actionable.",
+        "At this range the dark door has drifted to the right of my center, with a planter and flowering shrub crowding the left of my view. I will turn right to square my heading on the door before pressing closer to it.",
+        "The dark front door on the blue house's porch is now framed almost straight ahead with the walkway leading up to it. I will move forward along that line to close the remaining distance to the porch deck and the door.",
+        "I am now on the porch decking with the closed door clearly ahead and slightly left, its brass knob visible. Another step forward should bring me near enough to the door to reach the handle.",
+        "The door now dominates the left side of my view and the knob and latch plate are plainly visible, but I still seem a little short of contact range. I will step forward once more to place myself directly at the door before trying the handle.",
+        "I am right up against the door with the brass knob and latch filling the near view, so this should be within reach. I will attempt to open the door now.",
+        "My attempt at the handle left the door exactly as it was, still closed with the knob unmoved. My view is also skewed toward the frame edge and the siding beside it, so I will edge forward to change my position relative to the latch before trying again.",
+        "My view now shows only blank clapboard siding, so the last bit of forward motion put me past the doorway and facing the wall beside it, and my earlier attempt at the handle left the door shut. The door frame was to my left before I drifted off it, so I will turn left to bring the dark door back into view.",
+        "The door edge, white casing and brass knob have come back into view, but they sit at the far left margin with siding still filling most of my forward field. I will turn left once more to center the door panel and knob ahead of me before trying the handle again.",
+        "The dark door panel with its glass lights now fills my view and the brass knob sits squarely in front of me at close range, which is a far better alignment than when my earlier attempt at the handle left the door unchanged. I will attempt to open the door from this squared-up position, and it should give this time.",
+        "The dark front door stands swung inward, revealing the lit living room beyond. The task is complete, so I stop here."
+    ]
+}

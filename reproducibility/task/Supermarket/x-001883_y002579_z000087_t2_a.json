@@ -1,0 +1,13 @@
+{
+    "Instruction": "Walk to the leftmost light pole in the parking lot.",
+    "Type": 2,
+    "Start_Pose": [
+        -1882.941,
+        2578.57,
+        87.15,
+        0.0,
+        31.2,
+        -0.0
+    ],
+    "Exposure": -0.5
+}

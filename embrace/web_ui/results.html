@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EmbRACE Results</title>
+<!--
+  Served by embrace/web_ui/results.py. Lists the benchmark tasks with each model's outcome,
+  walks through an episode step by step, puts two models side by side, and tabulates success
+  per task type. The index is polled, so the page follows an evaluation that is still running.
+  ?model= &compare= &task=<Map>/<task> &step= &type= &env= &outcome= &q= &view=summary restore a
+  view, and the address bar follows the view. ?theme=dark switches to the dark palette.
+-->
+<style>
+:root, [data-theme="light"] {
+  --bg:#f5f5f7; --panel:#ffffff; --panel2:#fafafa; --head:#ffffff; --line:#e6e6e6; --line2:#eeeeee;
+  --text:#222222; --text2:#333333; --muted:#6b6b6b; --faint:#a8a8a8;
+  --accent:#FF3B30; --accent-soft:rgba(255,59,48,.07); --accent-line:rgba(255,59,48,.45);
+  --hover:#f7f7f8; --img-bg:#f4f4f4; --card:#fcfcfc; --card-line:#ececec;
+  --ok:#1e9e4a; --ok-soft:rgba(30,158,74,.1); --fail:#d93a2b; --fail-soft:rgba(217,58,43,.09);
+  --t0:#FF3B30; --t1:#FF9F0A; --t2:#e0b000; --t3:#32D74B; --t4:#40C8E0; --t5:#5E5CE6;
+  --move:#388E3C; --turn:#7C4DFF; --look:#c05ad8; --interact:#E64A19; --finish:#e0a800; --midway:#d49b00; --idle:#999999;
+}
+[data-theme="dark"] {
+  --bg:#0b0d12; --panel:#12151c; --panel2:#171b24; --head:#0e1117; --line:#252a35; --line2:#20242e;
+  --text:#eceef2; --text2:#d6d9df; --muted:#8a90a0; --faint:#5a6070;
+  --accent:#FF453A; --accent-soft:rgba(255,69,58,.12); --accent-line:rgba(255,69,58,.5);
+  --hover:#1a1f29; --img-bg:#07090d; --card:#161a22; --card-line:#262b36;
+  --ok:#3ecf6e; --ok-soft:rgba(62,207,110,.14); --fail:#ff6b5e; --fail-soft:rgba(255,107,94,.13);
+  --t0:#FF453A; --t1:#FF9F0A; --t2:#FFD60A; --t3:#32D74B; --t4:#40C8E0; --t5:#7d7bff;
+  --move:#4caf50; --turn:#8f6bff; --look:#ea80fc; --interact:#ff6a3d; --finish:#fbc02d; --midway:#ffe57f; --idle:#969696;
+}
+* { box-sizing:border-box; }
+html,body { margin:0; height:100%; overflow:hidden; background:var(--bg); color:var(--text);
+  font-family:"Google Sans","Noto Sans","Segoe UI",Helvetica,Arial,sans-serif; }
+button,input,select { font:inherit; }
+.app { height:100vh; display:grid; grid-template-rows:58px 1fr; }
+header { display:flex; align-items:center; gap:12px; padding:0 20px; border-bottom:1px solid var(--line); background:var(--head); }
+.brand { font-weight:700; font-size:20px; letter-spacing:.2px; display:flex; align-items:baseline; gap:6px; white-space:nowrap; }
+.wordmark span { font-weight:800; }
+.seg { display:inline-grid; grid-auto-flow:column; border:1px solid var(--line); border-radius:9px; overflow:hidden; background:var(--panel2); }
+.seg button { border:0; background:transparent; color:var(--muted); padding:6px 14px; cursor:pointer; font-size:12.5px; font-weight:700; }
+.seg button + button { border-left:1px solid var(--line); }
+.seg button.active { background:var(--accent); color:#fff; }
+.pick { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); }
+.pick select, #search, #envSelect { padding:6px 9px; border:1px solid var(--line); border-radius:7px; background:var(--panel2); color:var(--text); font-size:12px; outline:none; }
+.pick select { max-width:220px; cursor:pointer; }
+.header-stats { margin-left:auto; display:flex; gap:8px; }
+.pill { padding:5px 11px; border:1px solid var(--line); border-radius:999px; color:var(--muted); font-size:12px; background:var(--panel); white-space:nowrap; }
+.workspace { min-height:0; display:grid; grid-template-columns:440px 330px minmax(520px,1fr); }
+.column { min-height:0; border-right:1px solid var(--line); background:var(--panel); display:flex; flex-direction:column; }
+.column:last-child { border-right:0; background:var(--bg); }
+.column-head { padding:12px 14px; border-bottom:1px solid var(--line); }
+.scroll { min-height:0; overflow:auto; scrollbar-gutter:stable; }
+.controls { display:grid; gap:9px; }
+.search-row { display:grid; grid-template-columns:1fr 160px; gap:6px; }
+#search, #envSelect { width:100%; }
+#search:focus, #envSelect:focus, .pick select:focus { border-color:var(--accent-line); }
+.filter-row { display:flex; align-items:center; gap:4px; flex-wrap:wrap; }
+.filter { border:1px solid var(--line); background:var(--panel2); color:var(--muted); border-radius:5px; padding:2px 9px; cursor:pointer; font-size:11px; }
+.filter:hover { border-color:var(--accent-line); color:var(--text); }
+.filter.active { color:var(--accent); border-color:var(--accent-line); background:var(--accent-soft); font-weight:700; }
+.filter .n { opacity:.7; margin-left:3px; }
+.task-table-head,.task { display:grid; grid-template-columns:34px minmax(0,1fr) 28px 108px 22px; align-items:center; gap:6px; }
+.task-table-head { padding:6px 12px; background:var(--panel2); border-bottom:1px solid var(--line); color:var(--muted); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
+.rows { position:relative; }
+.task { position:absolute; left:0; right:0; height:32px; text-align:left; border:0; border-bottom:1px solid var(--line2); background:transparent; color:var(--text); padding:0 12px; cursor:pointer; font-size:12px; }
+.task:hover { background:var(--hover); }
+.task.active { background:var(--accent-soft); box-shadow:inset 3px 0 0 var(--accent); }
+.task-index { color:var(--faint); font-size:11px; }
+.task-instr, .task-map { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.task-map { color:var(--muted); font-size:11px; }
+.type-badge { display:inline-block; text-align:center; border-radius:4px; padding:1px 0; font-size:10px; font-weight:800; color:#fff; }
+.type-0 { background:var(--t0); } .type-1 { background:var(--t1); } .type-2 { background:var(--t2); }
+.type-3 { background:var(--t3); } .type-4 { background:var(--t4); } .type-5 { background:var(--t5); }
+.mark { font-weight:800; text-align:center; font-size:13px; }
+.mark.ok { color:var(--ok); } .mark.fail { color:var(--fail); } .mark.none { color:var(--faint); }
+.foot { flex:0 0 auto; padding:8px 12px; border-top:1px solid var(--line); background:var(--panel2); color:var(--muted); font-size:11px; }
+.summary { display:grid; gap:10px; }
+.task-id-card { border:1px solid var(--card-line); border-radius:9px; padding:8px 10px; background:var(--card); }
+.task-id-head { display:flex; align-items:center; justify-content:space-between; }
+.label { color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.6px; font-weight:700; }
+.copy-btn { border:1px solid var(--line); background:var(--panel); color:var(--muted); border-radius:5px; padding:1px 8px; font-size:11px; cursor:pointer; }
+.copy-btn:hover { color:var(--accent); border-color:var(--accent-line); }
+.task-id-value { display:block; margin-top:4px; font-size:12px; word-break:break-all; }
+.facts { display:grid; grid-template-columns:auto 1fr; gap:4px 12px; font-size:12.5px; }
+.facts .k { color:var(--muted); }
+.instruction { font-size:14px; line-height:1.45; font-weight:600; padding:10px 12px; border:1px solid var(--card-line); border-radius:9px; background:var(--card); }
+.instruction .lab { display:block; color:var(--accent); font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:.6px; margin-bottom:3px; }
+.outcome { border:1px solid var(--card-line); border-radius:9px; padding:8px 10px; background:var(--card); font-size:12px; }
+.outcome + .outcome { margin-top:6px; }
+.outcome-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:4px; }
+.outcome-model { font-weight:700; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.verdict { font-weight:800; font-size:11px; padding:2px 8px; border-radius:999px; white-space:nowrap; }
+.verdict.ok { color:var(--ok); background:var(--ok-soft); } .verdict.fail { color:var(--fail); background:var(--fail-soft); }
+.verdict.none { color:var(--muted); background:var(--panel2); }
+.nums { display:flex; gap:12px; color:var(--muted); font-size:11.5px; flex-wrap:wrap; }
+.nums b { color:var(--text); font-weight:700; }
+.action { width:100%; display:grid; grid-template-columns:34px 1fr; align-items:center; gap:8px; text-align:left; border:0; border-bottom:1px solid var(--line2); background:transparent; color:var(--text); padding:8px 14px; cursor:pointer; }
+.action:hover { background:var(--hover); }
+.action.active { background:var(--accent-soft); box-shadow:inset 3px 0 0 var(--accent); }
+.action-index { color:var(--faint); font-size:11px; font-family:ui-monospace,monospace; }
+.action-name { font-weight:700; font-size:13px; }
+.detail { height:100%; overflow:auto; scrollbar-gutter:stable; padding:16px 20px 24px; }
+.detail-head { display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+.step { display:inline-flex; align-items:baseline; gap:4px; }
+.step-now { font-size:22px; font-weight:800; color:var(--accent); line-height:1; }
+.step-sep { font-size:15px; color:var(--faint); }
+.step-all { font-size:15px; font-weight:700; color:var(--muted); }
+.step-word { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--faint); margin-left:3px; }
+.act-pill { display:inline-block; padding:4px 13px; border-radius:999px; color:#fff; font-size:13px; font-weight:800; white-space:nowrap; }
+.step-nav { margin-left:auto; display:inline-flex; border-radius:9px; overflow:hidden; box-shadow:0 1px 2px rgba(0,0,0,.08); }
+.nav-btn { border:0; background:var(--accent); color:#fff; padding:6px 14px; cursor:pointer; font-size:12.5px; font-weight:700; }
+.nav-btn + .nav-btn { border-left:1px solid rgba(255,255,255,.35); }
+.nav-btn:disabled { background:#dcdcdc; cursor:default; }
+[data-theme="dark"] .nav-btn:disabled { background:#343a46; color:#8a90a0; }
+.images { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.image-card { position:relative; border-radius:10px; overflow:hidden; background:var(--img-bg); aspect-ratio:4/3; }
+.image-card img { width:100%; height:100%; object-fit:contain; display:block; }
+.image-label { position:absolute; top:8px; left:8px; background:rgba(0,0,0,.6); color:#fff; font-size:11px; font-weight:700; padding:3px 8px; border-radius:5px; }
+.rationale { margin-top:14px; border:1px solid var(--card-line); border-radius:10px; background:var(--card); padding:12px 16px; }
+.rationale .rl { display:block; color:var(--accent); font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.6px; margin-bottom:6px; }
+.rationale .rt { font-size:15px; line-height:1.6; color:var(--text2); white-space:pre-wrap; }
+.panes { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.pane-head { display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
+.pane-model { font-weight:800; font-size:13px; }
+.pane-step { color:var(--muted); font-size:12px; font-weight:700; }
+.pane .rationale .rt { font-size:13.5px; }
+.ended { color:var(--muted); font-size:12px; font-style:italic; margin-top:6px; }
+.region { margin-top:16px; border:1px solid var(--card-line); border-radius:10px; background:var(--card); padding:14px 18px 16px; }
+.region .rl { display:block; color:var(--accent); font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.6px; margin-bottom:8px; }
+.stage-tag { display:inline-block; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; color:var(--text2); margin:6px 0; }
+.region-pair { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.region-img { border-radius:9px; overflow:hidden; aspect-ratio:4/3; background:#fff; border:1px solid var(--card-line); cursor:zoom-in; padding:0; width:100%; }
+.region-img img { width:100%; height:100%; object-fit:contain; display:block; }
+.zoom { position:fixed; inset:0; background:rgba(10,12,16,.82); display:none; align-items:center; justify-content:center; z-index:50; cursor:zoom-out; padding:24px; }
+.zoom.open { display:flex; }
+.zoom img { max-width:100%; max-height:100%; border-radius:8px; background:#fff; }
+.empty { padding:24px; color:var(--muted); font-size:13px; text-align:center; }
+.keys { color:var(--faint); font-size:11px; margin-top:12px; }
+.summary-view { overflow:auto; padding:22px 28px; background:var(--bg); }
+.summary-view h2 { font-size:15px; margin:4px 0 10px; }
+.summary-view p { color:var(--muted); font-size:12.5px; margin:0 0 12px; }
+table.grid { border-collapse:collapse; background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden; font-size:12.5px; margin-bottom:26px; }
+table.grid th, table.grid td { padding:7px 12px; border-bottom:1px solid var(--line2); text-align:right; white-space:nowrap; }
+table.grid th { background:var(--panel2); color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.4px; }
+table.grid td:first-child, table.grid th:first-child { text-align:left; font-weight:700; }
+table.grid tr.primary td { background:var(--accent-soft); }
+table.grid .dim { color:var(--faint); }
+[hidden] { display:none !important; }
+@media (max-width:1200px) {
+  html,body { overflow:auto; height:auto; }
+  .app { height:auto; }
+  header { flex-wrap:wrap; height:auto; padding:10px 16px; }
+  .workspace { grid-template-columns:1fr; }
+  .column { border-right:0; border-bottom:1px solid var(--line); }
+  .scroll { max-height:340px; }
+  #taskList { height:340px; }
+  .panes, .images { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <span class="wordmark"><span style="color:#FF3B30">E</span><span style="color:#FF9F0A">m</span><span style="color:#FFD60A">b</span><span style="color:#32D74B">R</span><span style="color:#40C8E0">A</span><span style="color:#5E5CE6">C</span><span style="color:#FF2D9B">E</span></span>
+      <span>Results</span>
+    </div>
+    <div class="seg" id="viewSwitch"><button data-view="browse" type="button">Browse</button><button data-view="summary" type="button">Summary</button></div>
+    <label class="pick">Model <select id="modelSelect"></select></label>
+    <label class="pick">Compare with <select id="compareSelect"></select></label>
+    <div class="header-stats"><span class="pill" id="progress">Loading…</span><span class="pill" id="updated"></span></div>
+  </header>
+  <main class="workspace" id="browse">
+    <section class="column">
+      <div class="column-head">
+        <div class="controls">
+          <div class="search-row">
+            <input id="search" placeholder="Search instruction, task or environment…" aria-label="Search tasks">
+            <select id="envSelect" aria-label="Environment"></select>
+          </div>
+          <div class="filter-row" id="typeFilter"></div>
+          <div class="filter-row" id="outcomeFilter"></div>
+        </div>
+      </div>
+      <div class="task-table-head"><span>#</span><span>Instruction</span><span>Type</span><span>Environment</span><span></span></div>
+      <div class="scroll" id="taskList" style="flex:1"><div class="rows" id="rows"><div class="empty">Loading…</div></div></div>
+      <div class="foot" id="foot"></div>
+    </section>
+    <section class="column">
+      <div class="column-head"><div id="taskSummary"><div class="empty">Select a task.</div></div></div>
+      <div class="scroll" id="actionList" style="flex:1"></div>
+    </section>
+    <section class="column">
+      <div class="detail" id="detail"><div class="empty">Select a task to walk through its steps.</div></div>
+    </section>
+  </main>
+  <main class="summary-view" id="summary" hidden></main>
+</div>
+
+<div class="zoom" id="zoom" role="dialog" aria-label="Enlarged image"><img id="zoomImg" alt=""></div>
+
+<script>
+(function () {
+  "use strict";
+
+  const params = new URLSearchParams(window.location.search);
+  document.documentElement.dataset.theme = params.get("theme") === "dark" ? "dark" : "light";
+
+  const TYPE_NAMES = ["Basic", "Exploration", "Dynamic Spatial-Semantic", "Multi-stage", "Open Door", "Pick & Drop"];
+  const ACTION_FAMILY = {
+    MoveForward: "move", MoveBackward: "move", TurnLeft: "turn", TurnRight: "turn",
+    LookUp: "look", LookDown: "look", OpenDoor: "interact", Pick: "interact", Drop: "interact",
+    Finish: "finish", MidwayTarget: "midway", Idle: "idle"
+  };
+  const actionColor = name => `var(--${ACTION_FAMILY[name] || "idle"})`;
+  const esc = v => { const d = document.createElement("div"); d.textContent = v ?? ""; return d.innerHTML; };
+  const fmt = n => n.toLocaleString("en-US");
+  const pct = (a, b) => b ? `${(100 * a / b).toFixed(1)}%` : "—";
+  const frame = i => String(i).padStart(3, "0") + ".jpg";
+  const $ = id => document.getElementById(id);
+  const ROW_H = 32;
+  const frameUrl = (t, model, i) => `frames/${encodeURIComponent(t.map)}/${encodeURIComponent(t.stem)}/${encodeURIComponent(model)}/${frame(i)}`;
+  const regionUrl = (t, file) => `regions/${encodeURIComponent(t.map)}/${encodeURIComponent(t.stem)}/${file}`;
+
+  const state = {
+    tasks: [], byKey: new Map(), models: [], envNames: {},
+    model: params.get("model") || "", compare: params.get("compare") || "",
+    view: params.get("view") === "summary" ? "summary" : "browse",
+    env: params.get("env") || "all", type: /^[0-5]$/.test(params.get("type") || "") ? Number(params.get("type")) : "all",
+    outcome: ["ok", "fail", "none"].includes(params.get("outcome")) ? params.get("outcome") : "all",
+    filtered: [], taskKey: params.get("task") || null, step: Math.max(0, parseInt(params.get("step") || "1", 10) - 1),
+    refresh: 10, loaded: false
+  };
+  const records = new Map(), regions = new Map();
+
+  // ------------------------------------------------------------------ index
+  function ingest(idx) {
+    const tc = Object.fromEntries(idx.task_columns.map((n, i) => [n, i]));
+    const ec = Object.fromEntries(idx.episode_columns.map((n, i) => [n, i]));
+    const tasks = idx.tasks.map(r => ({ map: r[tc.map], stem: r[tc.task], type: r[tc.type], instruction: r[tc.instruction] || "" }));
+    const byKey = new Map(tasks.map(t => [`${t.map}/${t.stem}`, t]));
+    const models = new Set();
+    idx.episodes.forEach(r => {
+      const key = `${r[ec.map]}/${r[ec.task]}`;
+      let t = byKey.get(key);
+      if (!t) {  // a result whose task file is not in --task_dir
+        const m = /_t(\d)_/.exec(r[ec.task]);
+        t = { map: r[ec.map], stem: r[ec.task], type: m ? Number(m[1]) : null, instruction: "" };
+        tasks.push(t); byKey.set(key, t);
+      }
+      t.eps = t.eps || {};
+      t.eps[r[ec.model]] = { steps: r[ec.steps], sr: r[ec.sr], os: r[ec.os], ne: r[ec.ne], tl: r[ec.tl], spl: r[ec.spl] };
+      models.add(r[ec.model]);
+    });
+    tasks.forEach(t => {
+      t.key = `${t.map}/${t.stem}`; t.eps = t.eps || {};
+      t.haystack = `${t.instruction} ${t.stem} ${t.map}`.toLowerCase();
+    });
+    state.tasks = tasks; state.byKey = byKey;
+    state.models = [...models].sort();
+    state.refresh = idx.refresh_s || 10;
+    if (!state.models.includes(state.model)) state.model = state.models[0] || "";
+    if (state.compare && !state.models.includes(state.compare)) state.compare = "";
+    $("updated").textContent = idx.pending > 0 ? `Scoring ${fmt(idx.pending)} episodes…`
+      : idx.scanned_at ? `Updated ${new Date(idx.scanned_at * 1000).toLocaleTimeString()}` : "Scanning…";
+  }
+
+  function outcomeOf(t, model) {
+    const e = t.eps[model];
+    if (!e) return "none";
+    return e.sr === 1 ? "ok" : e.sr === 0 ? "fail" : "none";
+  }
+
+  function fillModelSelects() {
+    const opts = state.models.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join("");
+    $("modelSelect").innerHTML = opts || '<option value="">no results yet</option>';
+    $("modelSelect").value = state.model;
+    $("compareSelect").innerHTML = '<option value="">—</option>' +
+      state.models.filter(m => m !== state.model).map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join("");
+    $("compareSelect").value = state.compare;
+  }
+
+  function progress() {
+    const eps = state.tasks.map(t => t.eps[state.model]).filter(Boolean);
+    const scored = eps.filter(e => e.sr === 0 || e.sr === 1);
+    const ok = scored.filter(e => e.sr === 1).length;
+    const total = state.tasks.length;
+    $("progress").textContent = state.model
+      ? `${state.model} · ${fmt(eps.length)}/${fmt(total)} tasks run · SR ${pct(ok, scored.length)}`
+      : "No results yet";
+  }
+
+  // ---------------------------------------------------------------- filters
+  const searchWords = () => { const q = $("search").value.trim().toLowerCase(); return q ? q.split(/\s+/) : []; };
+  const hit = (t, words) => words.every(w => t.haystack.includes(w));
+
+  function passes(t, words, skip) {
+    return (skip === "env" || state.env === "all" || t.map === state.env) &&
+      (skip === "type" || state.type === "all" || t.type === state.type) &&
+      (skip === "outcome" || state.outcome === "all" || outcomeOf(t, state.model) === state.outcome) &&
+      hit(t, words);
+  }
+
+  function refreshFacets(words) {
+    const envCounts = {}, typeCounts = {}, outCounts = { ok: 0, fail: 0, none: 0 };
+    let envAll = 0, typeAll = 0, outAll = 0;
+    state.tasks.forEach(t => {
+      if (passes(t, words, "env")) { envCounts[t.map] = (envCounts[t.map] || 0) + 1; envAll++; }
+      if (passes(t, words, "type")) { typeCounts[t.type] = (typeCounts[t.type] || 0) + 1; typeAll++; }
+      if (passes(t, words, "outcome")) { outCounts[outcomeOf(t, state.model)]++; outAll++; }
+    });
+    const maps = [...new Set(state.tasks.map(t => t.map))].sort();
+    $("envSelect").innerHTML = `<option value="all">All environments (${fmt(envAll)})</option>` +
+      maps.map(m => (envCounts[m] || m === state.env) ? `<option value="${esc(m)}">${esc(m)} (${fmt(envCounts[m] || 0)})</option>` : "").join("");
+    $("envSelect").value = state.env;
+    $("typeFilter").innerHTML = `<button class="filter" data-value="all" type="button">All<span class="n">${fmt(typeAll)}</span></button>` +
+      TYPE_NAMES.map((name, i) => (typeCounts[i] || state.type === i)
+        ? `<button class="filter" data-value="${i}" type="button" title="${esc(name)}">T${i}<span class="n">${fmt(typeCounts[i] || 0)}</span></button>` : "").join("");
+    $("typeFilter").querySelectorAll(".filter").forEach(b => b.classList.toggle("active", b.dataset.value === String(state.type)));
+    const outs = [["all", "All", outAll], ["ok", "✓ Success", outCounts.ok], ["fail", "✗ Failed", outCounts.fail], ["none", "Not run", outCounts.none]];
+    $("outcomeFilter").innerHTML = outs.map(([v, label, n]) =>
+      `<button class="filter" data-value="${v}" type="button">${label}<span class="n">${fmt(n)}</span></button>`).join("");
+    $("outcomeFilter").querySelectorAll(".filter").forEach(b => b.classList.toggle("active", b.dataset.value === state.outcome));
+  }
+
+  function applyFilters(keepScroll) {
+    const words = searchWords();
+    refreshFacets(words);
+    state.filtered = state.tasks.filter(t => passes(t, words));
+    const run = state.filtered.filter(t => t.eps[state.model]).length;
+    $("foot").textContent = `${fmt(state.filtered.length)} tasks shown · ${fmt(run)} run by ${state.model || "—"}`;
+    if (!keepScroll) $("taskList").scrollTop = 0;
+    renderTasks();
+    syncUrl();
+  }
+
+  function renderTasks() {
+    const rows = $("rows");
+    if (!state.filtered.length) { rows.style.height = ""; rows.innerHTML = '<div class="empty">No matching tasks.</div>'; return; }
+    rows.style.height = `${state.filtered.length * ROW_H}px`;
+    drawRows();
+  }
+
+  function drawRows() {
+    if (!state.filtered.length) return;
+    const list = $("taskList");
+    const start = Math.max(0, Math.floor(list.scrollTop / ROW_H) - 10);
+    const end = Math.min(state.filtered.length, Math.ceil((list.scrollTop + list.clientHeight) / ROW_H) + 10);
+    let html = "";
+    for (let i = start; i < end; i++) {
+      const t = state.filtered[i], o = outcomeOf(t, state.model), e = t.eps[state.model];
+      const mark = o === "ok" ? "✓" : o === "fail" ? "✗" : "·";
+      const tip = !e ? "Not run" : o === "ok" ? "Success" : o === "fail" ? "Failed" : "Not scored";
+      html += `<button class="task${state.taskKey === t.key ? " active" : ""}" data-i="${i}" type="button" style="top:${i * ROW_H}px" title="${esc(t.instruction)}">
+        <span class="task-index">${i + 1}</span>
+        <span class="task-instr">${esc(t.instruction || t.stem)}</span>
+        <span class="type-badge type-${t.type}" title="${esc(TYPE_NAMES[t.type] || "")}">T${t.type ?? "?"}</span>
+        <span class="task-map" title="${esc(t.map)}">${esc(t.map)}</span>
+        <span class="mark ${o}" title="${esc(tip)}">${mark}</span>
+      </button>`;
+    }
+    $("rows").innerHTML = html;
+  }
+
+  function revealTask() {
+    const i = state.filtered.findIndex(t => t.key === state.taskKey);
+    if (i < 0) return;
+    const list = $("taskList"), top = i * ROW_H;
+    if (top < list.scrollTop || top + ROW_H > list.scrollTop + list.clientHeight)
+      list.scrollTop = Math.max(0, top - list.clientHeight / 2);
+    drawRows();
+  }
+
+  // ---------------------------------------------------------------- episode
+  async function record(t, model) {
+    const key = `${t.key}/${model}`;
+    if (records.has(key)) return records.get(key);
+    const res = await fetch(`api/episode?map=${encodeURIComponent(t.map)}&task=${encodeURIComponent(t.stem)}&model=${encodeURIComponent(model)}`);
+    if (!res.ok) throw new Error(`${res.status}`);
+    const r = await res.json();
+    records.set(key, r);
+    return r;
+  }
+
+  async function regionStages(t) {
+    if (regions.has(t.key)) return regions.get(t.key);
+    try {
+      const res = await fetch(`api/regions?map=${encodeURIComponent(t.map)}&task=${encodeURIComponent(t.stem)}`);
+      const stages = res.ok ? (await res.json()).stages : [];
+      regions.set(t.key, stages);
+      return stages;
+    } catch (err) { return []; }
+  }
+
+  function shownModels(t) {
+    return [state.model, state.compare].filter(m => m && t.eps[m]);
+  }
+
+  async function selectTask(t, step) {
+    state.taskKey = t.key; state.step = step || 0;
+    drawRows(); renderSummary(t);
+    $("actionList").innerHTML = ""; $("detail").innerHTML = '<div class="empty">Loading…</div>';
+    const models = shownModels(t);
+    if (!models.length) {
+      $("detail").innerHTML = `<div class="empty">${esc(state.model)} has not run this task.</div>`;
+      syncUrl(); return;
+    }
+    try { await Promise.all(models.map(m => record(t, m))); }
+    catch (err) { $("detail").innerHTML = `<div class="empty">Could not load this episode (${esc(err.message)}).</div>`; return; }
+    await regionStages(t);
+    if (state.taskKey !== t.key) return;
+    state.step = Math.min(state.step, maxStep(t));
+    renderActions(t); renderDetail(t); syncUrl();
+  }
+
+  const current = () => state.byKey.get(state.taskKey);
+  const recordOf = (t, m) => records.get(`${t.key}/${m}`);
+  function maxStep(t) {
+    return Math.max(0, ...shownModels(t).map(m => (recordOf(t, m) ? recordOf(t, m).Action.length : 1) - 1));
+  }
+
+  function outcomeCard(t, model) {
+    const e = t.eps[model], o = outcomeOf(t, model);
+    const verdict = !e ? "Not run" : o === "ok" ? "✓ Success" : o === "fail" ? "✗ Failed" : "Not scored";
+    const nums = e ? `<div class="nums"><span>NE <b>${e.ne == null ? "—" : e.ne.toFixed(2) + " m"}</b></span><span>TL <b>${e.tl ?? "—"}</b></span><span>SPL <b>${e.spl == null ? "—" : e.spl.toFixed(3)}</b></span><span>OS <b>${e.os ?? "—"}</b></span></div>` : "";
+    return `<div class="outcome"><div class="outcome-head"><span class="outcome-model">${esc(model)}</span><span class="verdict ${o}">${esc(verdict)}</span></div>${nums}</div>`;
+  }
+
+  function renderSummary(t) {
+    const models = [state.model, state.compare].filter(Boolean);
+    $("taskSummary").innerHTML = `
+      <div class="summary">
+        <div class="task-id-card">
+          <div class="task-id-head"><span class="label">Task ID</span><button class="copy-btn" id="copyId" type="button">Copy</button></div>
+          <code class="task-id-value">${esc(t.stem)}</code>
+        </div>
+        <div class="facts">
+          <span class="k">Type</span><span>T${t.type} · ${esc(TYPE_NAMES[t.type] || "")}</span>
+          <span class="k">Environment</span><span>${esc(t.map)}</span>
+        </div>
+        <div class="instruction"><span class="lab">Instruction</span>${esc(t.instruction || "—")}</div>
+        <div>${models.map(m => outcomeCard(t, m)).join("")}</div>
+      </div>`;
+    $("copyId").addEventListener("click", async e => {
+      const btn = e.currentTarget;
+      try {
+        if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(t.stem);
+        else { const a = document.createElement("textarea"); a.value = t.stem; document.body.appendChild(a); a.select(); document.execCommand("copy"); a.remove(); }
+        btn.textContent = "Copied"; setTimeout(() => { btn.textContent = "Copy"; }, 1000);
+      } catch (err) { btn.textContent = "Select ID"; }
+    });
+  }
+
+  function renderActions(t) {
+    const r = recordOf(t, state.model);
+    const list = $("actionList");
+    if (!r) { list.innerHTML = ""; return; }
+    list.innerHTML = r.Action.map((a, i) => `
+      <button class="action${i === state.step ? " active" : ""}" data-i="${i}" type="button">
+        <span class="action-index">${String(i + 1).padStart(2, "0")}</span>
+        <span class="action-name" style="color:${actionColor(a)}">${esc(a)}</span>
+      </button>`).join("");
+    const active = list.querySelector(".action.active");
+    if (active) active.scrollIntoView({ block: "nearest" });
+  }
+
+  function selectStep(i) {
+    const t = current();
+    if (!t || i < 0 || i > maxStep(t)) return;
+    state.step = i; renderActions(t); renderDetail(t); syncUrl();
+  }
+
+  function reasoning(text, label) {
+    return `<div class="rationale"><span class="rl">${label}</span><div class="rt">${esc(text || "—")}</div></div>`;
+  }
+
+  function pane(t, model) {
+    const r = recordOf(t, model), n = r.Action.length, i = Math.min(state.step, n - 1);
+    const ended = state.step > n - 1 ? `<div class="ended">This episode ended at step ${n}.</div>` : "";
+    return `<div class="pane">
+      <div class="pane-head"><span class="pane-model">${esc(model)}</span>
+        <span class="pane-step">step ${i + 1}/${n}</span>
+        <span class="act-pill" style="background:${actionColor(r.Action[i])}">${esc(r.Action[i])}</span></div>
+      <div class="image-card"><span class="image-label">Before Action</span><img src="${esc(frameUrl(t, model, i))}" alt="Ego view"></div>
+      ${ended}
+      ${reasoning(r.Thinking[i], "Reasoning")}
+    </div>`;
+  }
+
+  function renderDetail(t) {
+    const models = shownModels(t), i = state.step, last = maxStep(t);
+    const nav = `<div class="step-nav">
+      <button class="nav-btn" id="prev" type="button" ${i === 0 ? "disabled" : ""}>← Previous</button>
+      <button class="nav-btn" id="next" type="button" ${i >= last ? "disabled" : ""}>Next →</button></div>`;
+    let body;
+    if (models.length === 2) {
+      body = `<div class="detail-head"><span class="step"><span class="step-now">${i + 1}</span><span class="step-sep">/</span><span class="step-all">${last + 1}</span><span class="step-word">steps</span></span>${nav}</div>
+        <div class="panes">${models.map(m => pane(t, m)).join("")}</div>`;
+    } else {
+      const m = models[0], r = recordOf(t, m), a = r.Action[i];
+      const missing = state.compare && !t.eps[state.compare] ? `<div class="ended">${esc(state.compare)} has not run this task.</div>` : "";
+      body = `<div class="detail-head">
+          <span class="step"><span class="step-now">${i + 1}</span><span class="step-sep">/</span><span class="step-all">${r.Action.length}</span><span class="step-word">steps</span></span>
+          <span class="act-pill" style="background:${actionColor(a)}">${esc(a)}</span>${nav}</div>
+        ${missing}
+        <div class="images">
+          <div class="image-card"><span class="image-label">Before Action</span><img src="${esc(frameUrl(t, m, i))}" alt="Ego view before the action"></div>
+          <div class="image-card"><span class="image-label">After Action</span><img src="${esc(frameUrl(t, m, i + 1))}" alt="Ego view after the action"></div>
+        </div>
+        ${reasoning(r.Thinking[i], "Reasoning")}`;
+    }
+    $("detail").innerHTML = body + regionHtml(t) +
+      '<div class="keys">← → or ↑ ↓ to move between steps · click a success-region image to enlarge it</div>';
+    $("prev").addEventListener("click", () => selectStep(i - 1));
+    $("next").addEventListener("click", () => selectStep(i + 1));
+    document.querySelectorAll(".region-img").forEach(b => b.addEventListener("click", () => {
+      $("zoomImg").src = b.dataset.src; $("zoom").classList.add("open");
+    }));
+  }
+
+  function regionHtml(t) {
+    const stages = regions.get(t.key) || [];
+    if (!stages.length) return "";
+    const fig = (file, alt) => `<button class="region-img" type="button" data-src="${esc(regionUrl(t, file))}"><img src="${esc(regionUrl(t, file))}" alt="${alt}"></button>`;
+    return `<div class="region"><span class="rl">Success region</span>${stages.map(([stage, xy, ue]) => `
+      ${stages.length > 1 ? `<span class="stage-tag">${stage === "midway" ? "Midway target" : "Final target"}</span>` : ""}
+      <div class="region-pair">${fig(xy, "Top-down plot of the success region")}${fig(ue, "Success region drawn over the scene")}</div>`).join("")}</div>`;
+  }
+
+  // ---------------------------------------------------------------- summary
+  function renderSummaryView() {
+    const total = state.tasks.length;
+    const head = `<tr><th>Model</th><th>Run</th>${TYPE_NAMES.map((n, i) => `<th title="${esc(n)}">T${i} SR</th>`).join("")}<th>All SR</th><th>OS</th><th>NE (m)</th><th>SPL</th></tr>`;
+    const rows = state.models.map(m => {
+      const per = TYPE_NAMES.map(() => [0, 0]);
+      let n = 0, ok = 0, os = 0, ne = 0, neN = 0, spl = 0;
+      state.tasks.forEach(t => {
+        const e = t.eps[m];
+        if (!e || (e.sr !== 0 && e.sr !== 1)) return;
+        n++; ok += e.sr; os += e.os || 0; spl += e.spl || 0;
+        if (e.ne != null) { ne += e.ne; neN++; }
+        if (per[t.type]) { per[t.type][0] += e.sr; per[t.type][1]++; }
+      });
+      const run = state.tasks.filter(t => t.eps[m]).length;
+      return `<tr class="${m === state.model ? "primary" : ""}"><td>${esc(m)}</td><td>${fmt(run)}/${fmt(total)}</td>
+        ${per.map(([a, b]) => `<td class="${b ? "" : "dim"}" title="${b ? `${a}/${b}` : ""}">${pct(a, b)}</td>`).join("")}
+        <td><b>${pct(ok, n)}</b></td><td>${pct(os, n)}</td><td>${neN ? (ne / neN).toFixed(2) : "—"}</td><td>${n ? (spl / n).toFixed(3) : "—"}</td></tr>`;
+    }).join("");
+    $("summary").innerHTML = `
+      <h2>Success by task type</h2>
+      <p>Over the tasks each model has run so far. The page rescans the results every ${state.refresh} s.</p>
+      <table class="grid">${head}${rows || '<tr><td colspan="12">No results yet.</td></tr>'}</table>`;
+  }
+
+  // -------------------------------------------------------------- plumbing
+  function setView(view) {
+    state.view = view;
+    $("browse").hidden = view !== "browse";
+    $("summary").hidden = view !== "summary";
+    document.querySelectorAll("#viewSwitch button").forEach(b => b.classList.toggle("active", b.dataset.view === view));
+    if (view === "summary") renderSummaryView(); else drawRows();
+    syncUrl();
+  }
+
+  function syncUrl() {
+    const p = new URLSearchParams();
+    if (params.get("theme")) p.set("theme", params.get("theme"));
+    if (state.view === "summary") p.set("view", "summary");
+    if (state.model) p.set("model", state.model);
+    if (state.compare) p.set("compare", state.compare);
+    if (state.env !== "all") p.set("env", state.env);
+    if (state.type !== "all") p.set("type", state.type);
+    if (state.outcome !== "all") p.set("outcome", state.outcome);
+    const q = $("search").value.trim();
+    if (q) p.set("q", q);
+    if (state.taskKey) p.set("task", state.taskKey);
+    if (state.taskKey && state.step > 0) p.set("step", state.step + 1);
+    history.replaceState(null, "", `${location.pathname}?${p.toString()}`);
+  }
+
+  async function poll(first) {
+    try {
+      const res = await fetch("api/index");
+      if (!res.ok) throw new Error(`${res.status}`);
+      const idx = await res.json();
+      const before = state.models.join("|");
+      ingest(idx);
+      if (first || before !== state.models.join("|")) fillModelSelects();
+      progress();
+      applyFilters(!first);
+      if (state.view === "summary") renderSummaryView();
+      const t = current();
+      if (first) {
+        const start = t || state.filtered[0];
+        if (start) { await selectTask(start, t ? state.step : 0); revealTask(); }
+      } else if (t && !$("detail").querySelector(".images, .panes") && shownModels(t).length) {
+        selectTask(t, state.step);  // the episode has just finished
+      } else if (t) {
+        renderSummary(t);
+      }
+    } catch (err) {
+      $("updated").textContent = `Could not read the index (${err.message})`;
+    }
+    setTimeout(poll, state.refresh * 1000);
+  }
+
+  $("zoom").addEventListener("click", () => $("zoom").classList.remove("open"));
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") { $("zoom").classList.remove("open"); return; }
+    if ($("zoom").classList.contains("open") || state.view !== "browse" || e.target.matches("input,textarea,select")) return;
+    if (["ArrowDown", "ArrowRight", "j"].includes(e.key)) { e.preventDefault(); selectStep(state.step + 1); }
+    if (["ArrowUp", "ArrowLeft", "k"].includes(e.key)) { e.preventDefault(); selectStep(state.step - 1); }
+  });
+  $("rows").addEventListener("click", e => { const b = e.target.closest(".task"); if (b) selectTask(state.filtered[Number(b.dataset.i)], 0); });
+  $("actionList").addEventListener("click", e => { const b = e.target.closest(".action"); if (b) selectStep(Number(b.dataset.i)); });
+  $("taskList").addEventListener("scroll", () => requestAnimationFrame(drawRows));
+  window.addEventListener("resize", () => requestAnimationFrame(drawRows));
+  $("search").addEventListener("input", () => applyFilters());
+  $("envSelect").addEventListener("change", e => { state.env = e.target.value; applyFilters(); });
+  $("typeFilter").addEventListener("click", e => {
+    const b = e.target.closest(".filter"); if (!b) return;
+    state.type = b.dataset.value === "all" ? "all" : Number(b.dataset.value); applyFilters();
+  });
+  $("outcomeFilter").addEventListener("click", e => {
+    const b = e.target.closest(".filter"); if (!b) return;
+    state.outcome = b.dataset.value; applyFilters();
+  });
+  const reselect = () => { const t = current(); fillModelSelects(); progress(); applyFilters(true); if (state.view === "summary") renderSummaryView(); if (t) selectTask(t, state.step); };
+  $("modelSelect").addEventListener("change", e => { state.model = e.target.value; if (state.compare === state.model) state.compare = ""; reselect(); });
+  $("compareSelect").addEventListener("change", e => { state.compare = e.target.value; reselect(); });
+  document.querySelectorAll("#viewSwitch button").forEach(b => b.addEventListener("click", () => setView(b.dataset.view)));
+
+  if (params.get("q")) $("search").value = params.get("q");
+  setView(state.view);
+  poll(true);
+})();
+</script>
+</body>
+</html>

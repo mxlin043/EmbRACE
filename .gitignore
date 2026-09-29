@@ -1,0 +1,6 @@
+UnrealEnv/
+runs/
+ue_*.log
+__pycache__/
+*.pyc
+datas/

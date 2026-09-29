@@ -1,0 +1,296 @@
+{
+    "Instruction": "Walk to the leftmost light pole in the parking lot.",
+    "Type": 2,
+    "Start_Pose": [
+        -1882.941,
+        2578.57,
+        87.15,
+        0.0,
+        31.2,
+        -0.0
+    ],
+    "Action": [
+        "MoveForward",
+        "MoveForward",
+        "MoveForward",
+        "TurnLeft",
+        "MoveForward",
+        "MoveForward",
+        "MoveForward",
+        "MoveForward",
+        "MoveForward",
+        "MoveForward",
+        "MoveForward",
+        "MoveForward",
+        "MoveForward",
+        "MoveForward",
+        "MoveForward",
+        "MoveForward",
+        "MoveForward",
+        "MoveForward",
+        "MoveForward",
+        "MoveForward",
+        "MoveForward",
+        "MoveForward",
+        "TurnRight",
+        "MoveForward",
+        "MoveForward",
+        "TurnRight",
+        "Finish"
+    ],
+    "Pose_Trajectory": [
+        [
+            -1882.941,
+            2578.57,
+            87.15,
+            0.0,
+            31.2,
+            -0.0
+        ],
+        [
+            -1775.286,
+            2643.768,
+            87.15,
+            0.0,
+            31.2,
+            -0.0
+        ],
+        [
+            -1667.63,
+            2708.967,
+            87.15,
+            0.0,
+            31.2,
+            -0.0
+        ],
+        [
+            -1559.975,
+            2774.165,
+            87.15,
+            0.0,
+            31.2,
+            -0.0
+        ],
+        [
+            -1559.975,
+            2774.165,
+            87.15,
+            0.0,
+            6.2,
+            -0.0
+        ],
+        [
+            -1434.852,
+            2787.758,
+            87.15,
+            0.0,
+            6.2,
+            -0.0
+        ],
+        [
+            -1309.729,
+            2801.351,
+            87.15,
+            0.0,
+            6.2,
+            -0.0
+        ],
+        [
+            -1184.607,
+            2814.943,
+            87.15,
+            0.0,
+            6.2,
+            -0.0
+        ],
+        [
+            -1059.484,
+            2828.536,
+            87.15,
+            0.0,
+            6.2,
+            -0.0
+        ],
+        [
+            -934.361,
+            2842.129,
+            87.15,
+            0.0,
+            6.2,
+            -0.0
+        ],
+        [
+            -809.238,
+            2855.721,
+            87.15,
+            0.0,
+            6.2,
+            -0.0
+        ],
+        [
+            -684.115,
+            2869.314,
+            87.15,
+            0.0,
+            6.2,
+            -0.0
+        ],
+        [
+            -558.992,
+            2882.907,
+            87.15,
+            0.0,
+            6.2,
+            -0.0
+        ],
+        [
+            -433.869,
+            2896.499,
+            87.15,
+            0.0,
+            6.2,
+            -0.0
+        ],
+        [
+            -308.747,
+            2910.092,
+            87.15,
+            0.0,
+            6.2,
+            -0.0
+        ],
+        [
+            -183.624,
+            2923.685,
+            87.15,
+            0.0,
+            6.2,
+            -0.0
+        ],
+        [
+            -58.501,
+            2937.277,
+            87.15,
+            0.0,
+            6.2,
+            -0.0
+        ],
+        [
+            66.622,
+            2950.87,
+            87.15,
+            0.0,
+            6.2,
+            -0.0
+        ],
+        [
+            191.745,
+            2964.463,
+            87.15,
+            0.0,
+            6.2,
+            -0.0
+        ],
+        [
+            316.868,
+            2978.056,
+            87.15,
+            0.0,
+            6.2,
+            -0.0
+        ],
+        [
+            441.99,
+            2991.648,
+            87.15,
+            0.0,
+            6.2,
+            -0.0
+        ],
+        [
+            567.113,
+            3005.241,
+            87.15,
+            0.0,
+            6.2,
+            -0.0
+        ],
+        [
+            692.236,
+            3018.834,
+            94.713,
+            0.0,
+            6.2,
+            -0.0
+        ],
+        [
+            692.236,
+            3018.834,
+            94.713,
+            0.0,
+            31.2,
+            -0.0
+        ],
+        [
+            799.891,
+            3084.032,
+            98.098,
+            0.0,
+            31.2,
+            -0.0
+        ],
+        [
+            899.331,
+            3117.74,
+            98.15,
+            0.0,
+            31.2,
+            -0.0
+        ],
+        [
+            899.331,
+            3117.74,
+            98.15,
+            0.0,
+            56.2,
+            -0.0
+        ],
+        [
+            899.331,
+            3117.74,
+            98.15,
+            0.0,
+            56.2,
+            -0.0
+        ]
+    ],
+    "Rationale": [
+        "Scanning the lot, I count the lamps standing along it and the leftmost is the slender one far off to my left, rising beside the raised walkway near the covered storefront, well past the big sign pole ahead of me. I fix on that slim lamp rather than a position in the row, and step forward to close the open asphalt between us.",
+        "The slim lamp I chose is still well off to my left, near the striped crossing by the storefront, while my heading carries me toward the tall sign pole instead. The pavement in front stays clear, so I continue walking to gain ground before correcting my heading.",
+        "The benches and sign pole ahead are noticeably larger now, and my lamp remains to the left beside the pedestrian crossing. Nothing blocks the lane in front of me, so I take another step forward before swinging my heading over toward it.",
+        "Walking straight is taking me toward the sign pole and benches on my right rather than toward the lamp I picked, which sits off to my left by the crossing. I turn left to swing my heading onto that lamp so the following steps run straight at it.",
+        "The turn worked: the slim lamp now stands near the middle of my view, with the supermarket frontage opening on my left and the sign pole pushed to my right edge. The lane between us is clear, so I walk forward along it.",
+        "The lamp I am heading for holds its place near the center of my view and its pole reads taller than before, confirming I am closing in. I keep walking straight down the open lane beside the storefront.",
+        "My heading is still true on the slim lamp ahead, which now shows its lamp head and the small fixture on its shaft clearly. The other poles have dropped out of my view, so I simply follow this one and step forward again.",
+        "The lamp continues to fill more of my view while staying centered, so my line toward it needs no adjustment yet. The lane beside the raised walkway remains clear, and I keep advancing.",
+        "The lamp's head and the dark fitting on its shaft read clearly against the sky, and the pole still sits square in my path with the raised walkway running down to its base. Only open asphalt lies between us, so another step should shorten that gap.",
+        "The pole now stretches most of the way up my view and its foot at the kerb edge has come into sight, so the line I am holding remains true on it. Nothing crosses the lane in front, and I walk on.",
+        "The low fittings clustered at the kerb beside the pole's base are becoming legible, which tells me distance is dropping steadily. My heading needs no trim, so I press straight on.",
+        "The lamp head has climbed close to the upper edge of my view, a sign I am well into the near half of this run. The strip of pavement ahead stays empty, so I take another stride toward the pole.",
+        "I can pick out the concrete pad where the pole plants itself, where the walkway meets the lot surface. Still too far to be standing beside it, so I continue straight without altering course.",
+        "The shaft now runs out through the top of my view and the small bench set near its footing is resolving, yet I am still several strides short of the pole itself. The way along the kerb is clear, so I keep going.",
+        "The pole's foot now sits a little right of my line, with the bench beside it plainly shaped. That offset is slight, so instead of turning I walk on and let the closing distance handle it.",
+        "The base and its neighbouring bench keep swelling in my view, confirming steady gain, and although the lamp head is above my sightline the shaft still anchors my heading. Nothing interrupts the pavement, so I step forward again.",
+        "The footing of the pole and the seat beside it read broad now, sitting a touch right of my line while the kerb runs toward them. Several strides of paving still separate us, so I keep walking rather than trimming my heading for so small an offset.",
+        "The bench has grown enough that its slatted top is legible, and the dark plinth beside it sits slightly right of where I am pointed. At this range that lean is minor, so I carry on along the kerb instead of correcting.",
+        "The raised walkway now spreads wide in front of me and the bench takes up much of my right side. I am still short of the pole's footing, so another stride forward is the plain thing to do.",
+        "I am coming level with the bench, which has swung out toward my right, and the pole's dark base stands just past it. A couple more paces should put me beside that footing, so I continue.",
+        "The seat is passing out along my right edge and the squat base of the pole now sits close against the kerb ahead. Only bare paving lies between, so I step on.",
+        "The shaft rises through the right of my view with its plinth barely a stride or two off, and the paved strip widens beneath me. I keep moving to close that last gap before squaring up to it.",
+        "Coming in this close has pushed the pole hard against my right edge, where I can only just hold its base in view. I turn right so the footing sits in front of me again and the last short approach runs straight at it.",
+        "The turn brought the shaft and its wide plinth squarely ahead, with the bench now off to my left. Just a short stretch of paving remains, so I walk in toward the base.",
+        "The plinth now fills the lower right of my view with the shaft rising straight out of the top, so I am nearly on top of it. One more short step should bring me level with the footing rather than stopping a stride short.",
+        "Standing this close, the base has slipped to my lower right edge and the pole itself is out of my sightline, with only the bollard and bench left of me. A turn right should bring the footing back in front of me so I can confirm I am beside it.",
+        "The bolted footing of the lamp pole stands right beside me, close enough to touch. I have arrived at it, so there is nothing further to walk toward."
+    ]
+}

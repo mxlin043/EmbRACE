@@ -1,0 +1,27 @@
+{
+    "rotation_order": ["pitch", "yaw", "roll"],
+    "maps": {
+        "IndustrialArea": [
+            {
+                "actor_id": "BP_Door_main_industria2_0",
+                "closed_rotation": [0.0, -90.0, 0.0]
+            },
+            {
+                "actor_id": "BP_Door_main_industria3_1",
+                "closed_rotation": [0.0, -90.0, 0.0]
+            },
+            {
+                "actor_id": "BP_Door_main_industria4_2",
+                "closed_rotation": [0.0, 90.0, 0.0]
+            },
+            {
+                "actor_id": "BP_Door_main_industria5_3",
+                "closed_rotation": [0.0, 90.0, 0.0]
+            },
+            {
+                "actor_id": "BP_Door_main_industria6_4",
+                "closed_rotation": [0.0, 90.0, 0.0]
+            }
+        ]
+    }
+}

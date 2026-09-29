@@ -1,0 +1,101 @@
+{
+    "default_size": 1.0,
+    "drop_by_reset_defaults": {
+        "forward_distance": 70,
+        "height_offset": 50,
+        "relative_rotation": [0, 0, 0]
+    },
+    "pd_objects": [
+        {
+            "id": 0,
+            "name": "tomato",
+            "size": 8.0,
+            "drop_by_reset": {
+                "forward_distance": 70,
+                "height_offset": -15,
+                "relative_rotation": [0, 0, 0]
+            }
+        },
+        {
+            "id": 2,
+            "name": "green bell pepper",
+            "size": 5.0,
+            "drop_by_reset": {
+                "forward_distance": 70,
+                "height_offset": 10,
+                "relative_rotation": [0, 0, 0]
+            }
+        },
+        {
+            "id": 7,
+            "name": "wicker basket",
+            "size": 2.5,
+            "drop_by_reset": {
+                "forward_distance": 70,
+                "height_offset": 35,
+                "relative_rotation": [90, 0, 0]
+            }
+        },
+        {
+            "id": 8,
+            "name": "ceramic pot",
+            "size": 1.5,
+            "drop_by_reset": {
+                "forward_distance": 70,
+                "height_offset": 20,
+                "relative_rotation": [0, 0, 0]
+            }
+        },
+        {"id": 13, "name": "jerry can", "size": 1.5},
+        {
+            "id": 14,
+            "name": "ceramic vase",
+            "size": 3.0,
+            "drop_by_reset": {
+                "forward_distance": 70,
+                "height_offset": 60,
+                "relative_rotation": [0, 0, 0]
+            }
+        },
+        {
+            "id": 16,
+            "name": "plate",
+            "size": 3.0,
+            "drop_by_reset": {
+                "forward_distance": 70,
+                "height_offset": 30,
+                "relative_rotation": [90, 0, 0]
+            }
+        },
+        {
+            "id": 17,
+            "name": "candelabra",
+            "size": 1.7,
+            "drop_by_reset": {
+                "forward_distance": 70,
+                "height_offset": 30,
+                "relative_rotation": [0, -70, 0]
+            }
+        },
+        {
+            "id": 18,
+            "name": "metal bucket",
+            "size": 2.0,
+            "drop_by_reset": {
+                "forward_distance": 70,
+                "height_offset": 40,
+                "relative_rotation": [0, 0, 0]
+            }
+        },
+        {
+            "id": 20,
+            "name": "trash bag",
+            "size": 1.5,
+            "drop_by_reset": {
+                "forward_distance": 70,
+                "height_offset": 40,
+                "relative_rotation": [0, 0, 0]
+            }
+        }
+    ]
+}

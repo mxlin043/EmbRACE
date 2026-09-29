@@ -1,0 +1,8 @@
+unrealcv==1.2.0
+numpy
+opencv-python
+pillow
+requests
+flask
+pyyaml
+huggingface_hub>=1.0
