@@ -239,12 +239,18 @@ bash scripts/check_reproducibility.sh
 replays the three demonstrations in `reproducibility/` (Dynamic
 Spatial-Semantic, Open Door, Pick & Drop) through the evaluator and compares
 every agent pose, door state and object pose with the recording. A correct
-installation reproduces them exactly:
+installation reproduces them exactly, so the output ends with a PASS for every
+demonstration:
 
 ```
-Global max agent pos diff: 0.000
-Global max PD pos diff: 0.000
+[PASS] SuburbNeighborhood_Day/x000269_y-000779_z000116_t4_a  T4  14 actions  agent_max=0.000 uu  door states match
+[PASS] Supermarket/x-001883_y002579_z000087_t2_a  T2  27 actions  agent_max=0.000 uu
+[PASS] VictorianTrainStation/x003143_y-002450_z000142_t5_a_p  T5  15 actions  agent_max=0.000 uu  pd_max=0.000 uu
+[>>>] 3/3 demonstrations reproduced exactly
 ```
+
+A demonstration that does not reproduce reads FAIL, and the script then exits
+with an error.
 
 Extra arguments go to the checker, so `--task_dir datas/benchmark/task
 --traj_dir datas/benchmark/trajectory --map IndustrialArea` replays the benchmark
